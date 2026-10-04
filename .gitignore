@@ -6,5 +6,6 @@ Cargo.lock
 sentinel-report-*.html
 sentinel-report-*.json
 /quarantine/
+/release_assets/
 .DS_Store
 Thumbs.db

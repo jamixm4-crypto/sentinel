@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-REPO="sentinel-sec/sentinel"
+REPO="jamixm4-crypto/sentinel"
 INSTALL_DIR="/usr/local/bin"
 
 echo "🛡️  Sentinel Installer"
