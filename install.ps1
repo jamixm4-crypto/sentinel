@@ -76,4 +76,11 @@ if ($UserPath -notlike "*$InstallDir*") {
 }
 
 Write-Host "`n✔ Sentinel installed successfully!" -ForegroundColor Green
-Write-Host "Run 'sentinel scan' to perform your first audit." -ForegroundColor Cyan
+
+$ExePath = Join-Path $InstallDir $BinName
+if (Test-Path $ExePath) {
+    Write-Host "`n🔍 Запуск первичного аудита безопасности..." -ForegroundColor Cyan
+    & $ExePath scan --lang ru
+} else {
+    Write-Host "Run 'sentinel scan --lang ru' to perform your first audit." -ForegroundColor Cyan
+}
