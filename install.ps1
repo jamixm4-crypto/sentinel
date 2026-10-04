@@ -81,6 +81,13 @@ $ExePath = Join-Path $InstallDir $BinName
 if (Test-Path $ExePath) {
     Write-Host "`n🔍 Запуск первичного аудита безопасности..." -ForegroundColor Cyan
     & $ExePath scan --lang ru
+
+    $LatestReport = Get-ChildItem -Path . -Filter "sentinel-report-*.html" -ErrorAction SilentlyContinue | 
+        Sort-Object LastWriteTime -Descending | 
+        Select-Object -First 1
+    if ($LatestReport) {
+        Start-Process $LatestReport.FullName
+    }
 } else {
     Write-Host "Run 'sentinel scan --lang ru' to perform your first audit." -ForegroundColor Cyan
 }

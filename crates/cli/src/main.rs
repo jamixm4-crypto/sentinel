@@ -217,11 +217,24 @@ fn execute_scan(lang: Lang, out_dir: &Path, emit_json: bool, no_open: bool, pers
     if let Err(e) = generate_html_report(&result, &html_path, lang) {
         eprintln!("Failed to write HTML report: {}", e);
     } else {
-        println!("  HTML report generated: {}", html_path.display().to_string().cyan());
+        let abs_html = if html_path.is_relative() {
+            std::env::current_dir().unwrap_or_default().join(&html_path)
+        } else {
+            html_path.clone()
+        };
+        println!("  HTML report generated: {}", abs_html.display().to_string().cyan());
         if !no_open {
             #[cfg(target_os = "windows")]
             let _ = std::process::Command::new("cmd")
-                .args(["/C", "start", "", &html_path.display().to_string()])
+                .args(["/C", "start", "", &abs_html.display().to_string()])
+                .spawn();
+            #[cfg(target_os = "macos")]
+            let _ = std::process::Command::new("open")
+                .arg(&abs_html)
+                .spawn();
+            #[cfg(target_os = "linux")]
+            let _ = std::process::Command::new("xdg-open")
+                .arg(&abs_html)
                 .spawn();
         }
     }
