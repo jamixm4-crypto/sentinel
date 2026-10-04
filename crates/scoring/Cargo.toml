@@ -1,0 +1,11 @@
+[package]
+name = "sentinel-scoring"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+sentinel-core = { workspace = true }
+sentinel-rules = { workspace = true }
+tracing = { workspace = true }
