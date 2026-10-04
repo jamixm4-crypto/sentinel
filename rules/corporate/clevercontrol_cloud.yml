@@ -1,0 +1,50 @@
+id: "CORP-WIN-0016"
+name: "CleverControl Cloud Agent"
+version: 1
+category: "ScreenCapture"
+severity: "High"
+base_confidence: 0.93
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "CleverControl Inc."
+description: "Cloud-based employee monitoring software logging keystrokes, periodic desktop screen captures, webcam snapshots, and visited sites."
+is_legitimate_use_likely: false
+
+detection:
+  processes:
+    - name: "clvctrl.exe"
+    - name: "clvagent.exe"
+    - name: "clevercontrol.exe"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\CleverControl"
+  services:
+    - name: "ClvService"
+    - name: "CleverControlAgent"
+  paths:
+    - "C:\\Program Files\\CleverControl\\"
+    - "C:\\ProgramData\\CleverControl\\"
+  network_domains:
+    - "clevercontrol.com"
+
+removal:
+  services_to_stop:
+    - "ClvService"
+    - "CleverControlAgent"
+  services_to_delete:
+    - "ClvService"
+  processes_to_kill:
+    - "clvctrl.exe"
+    - "clvagent.exe"
+  paths_to_remove:
+    - "C:\\ProgramData\\CleverControl"
+  manual_steps_windows: |
+    1. Stop ClvService service in services.msc.
+    2. End clvctrl.exe process.
+    3. Delete C:\ProgramData\CleverControl folder.
+
+references:
+  - "https://clevercontrol.com/"
+  - "https://attack.mitre.org/techniques/T1113/"

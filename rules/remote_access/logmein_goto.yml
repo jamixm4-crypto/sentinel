@@ -1,0 +1,48 @@
+id: "RMT-WIN-0015"
+name: "GoToMyPC / LogMeIn Remote Host"
+version: 1
+category: "RemoteAccess"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "GoTo (LogMeIn, Inc.)"
+description: "Remote desktop access host enabling unattended remote screen control, file transfer, and background session connections."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "gotomypc.exe"
+    - name: "g2comm.exe"
+    - name: "logmein.exe"
+    - name: "ramservice.exe"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\LogMeIn"
+    - hive: "HKLM"
+      path: "SOFTWARE\\Citrix\\GoToMyPC"
+  services:
+    - name: "LogMeIn"
+    - name: "GoToMyPC"
+  paths:
+    - "C:\\Program Files\\LogMeIn\\"
+    - "C:\\Program Files (x86)\\GoToMyPC\\"
+  network_domains:
+    - "logmein.com"
+    - "gotomypc.com"
+
+removal:
+  services_to_stop:
+    - "LogMeIn"
+    - "GoToMyPC"
+  processes_to_kill:
+    - "gotomypc.exe"
+    - "logmein.exe"
+  manual_steps_windows: |
+    1. Uninstall via Windows Apps & Features.
+    2. Or disable the LogMeIn / GoToMyPC service.
+
+references:
+  - "https://attack.mitre.org/techniques/T1219/"

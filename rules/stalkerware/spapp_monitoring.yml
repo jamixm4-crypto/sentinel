@@ -1,0 +1,54 @@
+id: "STK-WIN-0043"
+name: "Spapp Monitoring (Spy Phone App)"
+version: 1
+category: "KeyboardCapture"
+severity: "High"
+base_confidence: 0.88
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "Spapp Monitoring"
+description: "Surveillance agent capable of tracking browser history, capturing keystrokes, and recording screen activity."
+is_legitimate_use_likely: false
+safety_warning: "Removing Spapp Monitoring will alert the monitoring dashboard that the client is offline."
+
+detection:
+  processes:
+    - name: "spapp.exe"
+    - name: "spyphoneapp.exe"
+    - name: "spappsvc.exe"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\Spapp Monitoring"
+    - hive: "HKCU"
+      path: "Software\\Spapp Monitoring"
+  services:
+    - name: "SpappService"
+  paths:
+    - "C:\\Program Files (x86)\\Spapp Monitoring\\"
+    - "C:\\ProgramData\\Spapp\\"
+  network_domains:
+    - "spappmonitoring.com"
+    - "spyphoneapp.com"
+
+removal:
+  services_to_stop:
+    - "SpappService"
+  services_to_delete:
+    - "SpappService"
+  processes_to_kill:
+    - "spapp.exe"
+    - "spyphoneapp.exe"
+    - "spappsvc.exe"
+  paths_to_remove:
+    - "C:\\Program Files (x86)\\Spapp Monitoring"
+    - "C:\\ProgramData\\Spapp"
+  manual_steps_windows: |
+    1. Stop SpappService via services.msc.
+    2. Terminate spapp.exe and spappsvc.exe in Task Manager.
+    3. Remove C:\Program Files (x86)\Spapp Monitoring.
+    4. Remove registry key HKLM\SOFTWARE\Spapp Monitoring.
+
+references:
+  - "https://stopstalkerware.org/"
+  - "https://attack.mitre.org/techniques/T1056/001/"

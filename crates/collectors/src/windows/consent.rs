@@ -43,10 +43,11 @@ impl Collector for WindowsConsentStoreCollector {
                             );
 
                             evidence.push(
-                                Evidence::new(EvidenceType::ScreenCaptureApi, self.name(), desc, tech)
-                                    .with_data(EvidenceData::Generic {
-                                        key: "ConsentStoreActive".to_string(),
-                                        value: format!("{}:{}", cap, original_path),
+                                Evidence::new(EvidenceType::HardwareCaptureAccess, self.name(), desc, tech)
+                                    .with_data(EvidenceData::HardwareAccess {
+                                        device_type: cap.to_string(),
+                                        application: original_path,
+                                        is_active: true,
                                     }),
                             );
                         }

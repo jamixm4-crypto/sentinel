@@ -1,0 +1,48 @@
+id: "STK-WIN-0049"
+name: "NetVizor Network Surveillance"
+version: 1
+category: "ScreenCapture"
+severity: "High"
+base_confidence: 0.91
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "Spytech Software and Design, Inc."
+description: "Centralized enterprise monitoring solution capturing real-time screenshots, keystrokes, and application activity over LAN."
+is_legitimate_use_likely: false
+
+detection:
+  processes:
+    - name: "nvclient.exe"
+    - name: "nvservice.exe"
+    - name: "netvizor.exe"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\NetVizor"
+  services:
+    - name: "NVService"
+  paths:
+    - "C:\\Program Files\\NetVizor\\"
+    - "C:\\Windows\\system32\\nvclient\\"
+  network_domains:
+    - "spytech-web.com"
+
+removal:
+  services_to_stop:
+    - "NVService"
+  services_to_delete:
+    - "NVService"
+  processes_to_kill:
+    - "nvclient.exe"
+    - "nvservice.exe"
+  paths_to_remove:
+    - "C:\\Program Files\\NetVizor"
+    - "C:\\Windows\\system32\\nvclient"
+  manual_steps_windows: |
+    1. Stop and delete NVService service.
+    2. Terminate nvclient.exe in Task Manager.
+    3. Remove C:\Program Files\NetVizor directory.
+
+references:
+  - "https://attack.mitre.org/techniques/T1113/"
+  - "https://attack.mitre.org/techniques/T1056/001/"

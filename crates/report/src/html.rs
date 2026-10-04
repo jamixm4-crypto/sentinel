@@ -137,6 +137,31 @@ pub fn render_html_string(result: &ScanResult, _lang: Lang) -> String {
     border-radius: 8px;
     font-size: 14px;
   }}
+  .mitre-section-title {{ font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }}
+  .mitre-grid {{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }}
+  .mitre-card {{
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    text-align: left;
+  }}
+  .mitre-code {{ font-size: 11px; color: var(--text-muted); font-family: monospace; }}
+  .mitre-name {{ font-size: 13px; font-weight: 600; margin: 4px 0 6px 0; }}
+  .mitre-status {{
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    display: inline-block;
+  }}
+  .status-clear {{ background: rgba(16, 185, 129, 0.15); color: var(--success); }}
+  .status-detected {{ background: rgba(244, 63, 94, 0.2); color: var(--danger); border: 1px solid var(--danger); }}
   .card {{
     background: var(--card-bg);
     border: 1px solid var(--border);
@@ -244,6 +269,40 @@ pub fn render_html_string(result: &ScanResult, _lang: Lang) -> String {
     <div class="meta-item"><span>Total Findings</span><strong id="findingCount">0</strong></div>
   </div>
 
+  <div class="mitre-section-title"><span>🎯 MITRE ATT&CK® Threat Surveillance Surface</span></div>
+  <div class="mitre-grid">
+    <div class="mitre-card" id="cardT1056">
+      <div class="mitre-code">T1056.001</div>
+      <div class="mitre-name">Keylogging</div>
+      <div class="mitre-status status-clear" id="statusT1056">CLEAR</div>
+    </div>
+    <div class="mitre-card" id="cardT1113">
+      <div class="mitre-code">T1113</div>
+      <div class="mitre-name">Screen Capture</div>
+      <div class="mitre-status status-clear" id="statusT1113">CLEAR</div>
+    </div>
+    <div class="mitre-card" id="cardT1125">
+      <div class="mitre-code">T1125 / T1123</div>
+      <div class="mitre-name">Camera & Mic</div>
+      <div class="mitre-status status-clear" id="statusT1125">CLEAR</div>
+    </div>
+    <div class="mitre-card" id="cardT1219">
+      <div class="mitre-code">T1219 / T1021</div>
+      <div class="mitre-name">Remote Control</div>
+      <div class="mitre-status status-clear" id="statusT1219">CLEAR</div>
+    </div>
+    <div class="mitre-card" id="cardT1020">
+      <div class="mitre-code">T1020 / T1071</div>
+      <div class="mitre-name">C2 Exfiltration</div>
+      <div class="mitre-status status-clear" id="statusT1020">CLEAR</div>
+    </div>
+    <div class="mitre-card" id="cardT1562">
+      <div class="mitre-code">T1562.001</div>
+      <div class="mitre-name">Watchdog Protection</div>
+      <div class="mitre-status status-clear" id="statusT1562">CLEAR</div>
+    </div>
+  </div>
+
   <div class="search-filter-bar">
     <input type="text" id="searchInput" placeholder="Search by name, process, path, or vendor..." oninput="filterCards()">
     <select id="severityFilter" onchange="filterCards()">
@@ -301,6 +360,34 @@ pub fn render_html_string(result: &ScanResult, _lang: Lang) -> String {
     const container = document.getElementById('findingsContainer');
     container.innerHTML = '';
     document.getElementById('findingCount').innerText = findings.length;
+
+    // Update MITRE ATT&CK Matrix
+    const hasKeylog = findings.some(f => f.category === 'KeyboardCapture');
+    const hasScreen = findings.some(f => f.category === 'ScreenCapture');
+    const hasHardware = findings.some(f => f.evidence && f.evidence.some(e => e.evidence_type === 'HardwareCaptureAccess'));
+    const hasRemote = findings.some(f => f.category === 'RemoteAccess');
+    const hasC2 = findings.some(f => f.rule_id === 'stalkerware_c2_network_beacon' || f.category === 'NetworkActivity');
+    const hasWatchdog = findings.some(f => f.category === 'ProcessWatcher');
+
+    function updateMitre(id, detected) {{
+      const el = document.getElementById(id);
+      if (el) {{
+        if (detected) {{
+          el.innerText = 'DETECTED';
+          el.className = 'mitre-status status-detected';
+        }} else {{
+          el.innerText = 'CLEAR';
+          el.className = 'mitre-status status-clear';
+        }}
+      }}
+    }}
+
+    updateMitre('statusT1056', hasKeylog);
+    updateMitre('statusT1113', hasScreen);
+    updateMitre('statusT1125', hasHardware);
+    updateMitre('statusT1219', hasRemote);
+    updateMitre('statusT1020', hasC2);
+    updateMitre('statusT1562', hasWatchdog);
 
     if (findings.length === 0) {{
       container.innerHTML = '<div class="card" style="text-align:center; padding: 40px; color: var(--text-muted);">' +

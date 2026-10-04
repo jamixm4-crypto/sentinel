@@ -20,6 +20,8 @@ pub enum EvidenceType {
     SecurityFrameworkClient,
     UnsignedBinaryExecution,
     KnownFileArtifact,
+    HardwareCaptureAccess,
+    CommandAndControlBeacon,
 }
 
 /// Strongly typed container for evidence details
@@ -53,6 +55,11 @@ pub enum EvidenceData {
         local_address: String,
         remote_address: Option<String>,
         pid: Option<u32>,
+    },
+    HardwareAccess {
+        device_type: String,
+        application: String,
+        is_active: bool,
     },
     Generic {
         key: String,

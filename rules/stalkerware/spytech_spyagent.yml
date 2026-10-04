@@ -1,0 +1,45 @@
+id: "STK-WIN-0047"
+name: "SpyTech SpyAgent"
+version: 1
+category: "KeyboardCapture"
+severity: "Critical"
+base_confidence: 0.95
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "Spytech Software and Design, Inc."
+description: "Stealth computer monitoring spyware logging keystrokes, application activity, webcam footage, and microphone audio."
+is_legitimate_use_likely: false
+
+detection:
+  processes:
+    - name: "sysagent.exe"
+    - name: "spyagent.exe"
+    - name: "sysdiag.exe"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\Spytech"
+    - hive: "HKCU"
+      path: "Software\\Spytech"
+  paths:
+    - "C:\\Program Files\\Spytech SpyAgent\\"
+    - "C:\\Windows\\system32\\sysagent\\"
+  network_domains:
+    - "spytech-web.com"
+
+removal:
+  processes_to_kill:
+    - "sysagent.exe"
+    - "spyagent.exe"
+    - "sysdiag.exe"
+  paths_to_remove:
+    - "C:\\Program Files\\Spytech SpyAgent"
+    - "C:\\Windows\\system32\\sysagent"
+  manual_steps_windows: |
+    1. Terminate sysagent.exe via Task Manager.
+    2. Remove C:\Program Files\Spytech SpyAgent directory.
+    3. Remove HKEY_LOCAL_MACHINE\SOFTWARE\Spytech from registry.
+
+references:
+  - "https://stopstalkerware.org/"
+  - "https://attack.mitre.org/techniques/T1056/001/"

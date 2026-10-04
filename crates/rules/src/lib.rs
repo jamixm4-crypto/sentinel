@@ -1,9 +1,11 @@
 //! Sentinel Rules - YAML Rule Database, Schema, and Matcher
 
+pub mod c2_domains;
 pub mod loader;
 pub mod matcher;
 pub mod schema;
 
+pub use c2_domains::{matches_known_c2, KNOWN_C2_DOMAINS};
 pub use loader::{load_rule_file, load_rule_from_str, load_rules_from_dir, validate_rule, RuleLoadError};
 pub use matcher::{RuleMatch, RuleMatcher};
 pub use schema::{
@@ -35,6 +37,17 @@ pub fn get_embedded_rules() -> Vec<Rule> {
         include_str!("../../../rules/stalkerware/moniterro.yml"),
         include_str!("../../../rules/stalkerware/pc_pandora.yml"),
 
+        include_str!("../../../rules/stalkerware/spapp_monitoring.yml"),
+        include_str!("../../../rules/stalkerware/spyic.yml"),
+        include_str!("../../../rules/stalkerware/sentrypc.yml"),
+        include_str!("../../../rules/stalkerware/softactivity.yml"),
+        include_str!("../../../rules/stalkerware/spytech_spyagent.yml"),
+        include_str!("../../../rules/stalkerware/webwatcher.yml"),
+        include_str!("../../../rules/stalkerware/netvizor.yml"),
+        include_str!("../../../rules/stalkerware/kidinspector.yml"),
+        include_str!("../../../rules/stalkerware/elite_keylogger.yml"),
+        include_str!("../../../rules/stalkerware/micro_keylogger.yml"),
+
         include_str!("../../../rules/corporate/teramind.yml"),
         include_str!("../../../rules/corporate/activtrak.yml"),
         include_str!("../../../rules/corporate/hubstaff.yml"),
@@ -48,6 +61,9 @@ pub fn get_embedded_rules() -> Vec<Rule> {
         include_str!("../../../rules/corporate/clevercontrol.yml"),
         include_str!("../../../rules/corporate/staffcop.yml"),
         include_str!("../../../rules/corporate/rhubarb.yml"),
+        include_str!("../../../rules/corporate/qustodio.yml"),
+        include_str!("../../../rules/corporate/famisafe.yml"),
+        include_str!("../../../rules/corporate/clevercontrol_cloud.yml"),
 
         include_str!("../../../rules/remote_access/teamviewer.yml"),
         include_str!("../../../rules/remote_access/anydesk.yml"),
@@ -62,6 +78,8 @@ pub fn get_embedded_rules() -> Vec<Rule> {
         include_str!("../../../rules/remote_access/chrome_remote_desktop.yml"),
         include_str!("../../../rules/remote_access/ammyy_admin.yml"),
         include_str!("../../../rules/remote_access/logmein.yml"),
+        include_str!("../../../rules/remote_access/logmein_goto.yml"),
+        include_str!("../../../rules/remote_access/tightvnc.yml"),
 
         include_str!("../../../rules/edr_mdm/crowdstrike.yml"),
         include_str!("../../../rules/edr_mdm/sentinelone.yml"),

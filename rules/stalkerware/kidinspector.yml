@@ -1,0 +1,50 @@
+id: "STK-WIN-0050"
+name: "KidInspector Monitoring"
+version: 1
+category: "KeyboardCapture"
+severity: "High"
+base_confidence: 0.88
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "KidInspector"
+description: "Stealth parental and employee monitor recording webcams, microphones, and keyboard input."
+is_legitimate_use_likely: false
+
+detection:
+  processes:
+    - name: "kidinspector.exe"
+    - name: "ki_agent.exe"
+    - name: "ki_service.exe"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\KidInspector"
+  services:
+    - name: "KIService"
+  paths:
+    - "C:\\Program Files\\KidInspector\\"
+    - "C:\\ProgramData\\KidInspector\\"
+  network_domains:
+    - "kidinspector.com"
+
+removal:
+  services_to_stop:
+    - "KIService"
+  services_to_delete:
+    - "KIService"
+  processes_to_kill:
+    - "kidinspector.exe"
+    - "ki_agent.exe"
+    - "ki_service.exe"
+  paths_to_remove:
+    - "C:\\Program Files\\KidInspector"
+    - "C:\\ProgramData\\KidInspector"
+  manual_steps_windows: |
+    1. Stop and remove KIService.
+    2. End kidinspector.exe in Task Manager.
+    3. Delete C:\ProgramData\KidInspector directory.
+
+references:
+  - "https://stopstalkerware.org/"
+  - "https://attack.mitre.org/techniques/T1056/001/"

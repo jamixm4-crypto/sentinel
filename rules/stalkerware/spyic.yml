@@ -1,0 +1,57 @@
+id: "STK-WIN-0044"
+name: "Spyic Desktop Monitor"
+version: 1
+category: "ScreenCapture"
+severity: "High"
+base_confidence: 0.90
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "Spyic"
+description: "Stealth desktop monitoring application that logs social media, captures screens, and tracks user activity."
+is_legitimate_use_likely: false
+safety_warning: "Halting Spyic sends an immediate disconnection event to the remote monitoring dashboard."
+
+detection:
+  processes:
+    - name: "spyic.exe"
+    - name: "spyicsvc.exe"
+    - name: "spyic_monitor.exe"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\Spyic"
+    - hive: "HKCU"
+      path: "Software\\Spyic"
+  services:
+    - name: "SpyicService"
+  paths:
+    - "C:\\ProgramData\\Spyic\\"
+    - "C:\\Program Files\\Spyic\\"
+  network_domains:
+    - "spyic.com"
+    - "api.spyic.com"
+
+removal:
+  services_to_stop:
+    - "SpyicService"
+  services_to_delete:
+    - "SpyicService"
+  processes_to_kill:
+    - "spyic.exe"
+    - "spyicsvc.exe"
+    - "spyic_monitor.exe"
+  paths_to_remove:
+    - "C:\\ProgramData\\Spyic"
+    - "C:\\Program Files\\Spyic"
+  manual_steps_windows: |
+    1. Terminate spyic.exe via Task Manager.
+    2. Stop and delete SpyicService.
+    3. Delete C:\ProgramData\Spyic folder.
+  manual_steps_macos: |
+    1. Kill spyic process: `pkill -9 spyic`
+    2. Remove /Applications/Spyic.app
+
+references:
+  - "https://stopstalkerware.org/"
+  - "https://attack.mitre.org/techniques/T1113/"

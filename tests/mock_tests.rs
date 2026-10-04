@@ -9,7 +9,7 @@ use sentinel_scoring::ScoringEngine;
 fn test_embedded_rules_validity() {
     let rules = get_embedded_rules();
     assert!(!rules.is_empty(), "Embedded rules should not be empty");
-    assert!(rules.len() >= 30, "Expected at least 30 embedded rules");
+    assert!(rules.len() >= 75, "Expected at least 75 embedded rules");
 
     for r in &rules {
         assert!(!r.id.is_empty(), "Rule ID must not be empty");
@@ -35,7 +35,7 @@ fn test_clean_system_verdict() {
             pid: 1000,
             name: "explorer.exe".to_string(),
             exe_path: Some("C:\\Windows\\explorer.exe".to_string()),
-            cmdline: None,
+            command_line: None,
         }),
         Evidence::new(
             EvidenceType::ActiveProcess,
@@ -47,7 +47,7 @@ fn test_clean_system_verdict() {
             pid: 1004,
             name: "svchost.exe".to_string(),
             exe_path: Some("C:\\Windows\\System32\\svchost.exe".to_string()),
-            cmdline: None,
+            command_line: None,
         }),
     ];
 
@@ -73,7 +73,7 @@ fn test_spyrix_detection_and_severity() {
             pid: 4321,
             name: "spx.exe".to_string(),
             exe_path: Some("C:\\Program Files (x86)\\Spyrix Personal Monitor\\spx.exe".to_string()),
-            cmdline: None,
+            command_line: None,
         }),
         Evidence::new(
             EvidenceType::RegistryRunKey,
@@ -113,7 +113,7 @@ fn test_do_not_remove_policy_blocking() {
         pid: 900,
         name: "CSFalconService.exe".to_string(),
         exe_path: Some("C:\\Program Files\\CrowdStrike\\CSFalconService.exe".to_string()),
-        cmdline: None,
+        command_line: None,
     })];
 
     let (_, findings) = scoring.evaluate(&cs_evidence);
@@ -146,7 +146,7 @@ fn test_personal_safety_mode_blocks_removal() {
         pid: 300,
         name: "mspy.exe".to_string(),
         exe_path: Some("C:\\ProgramData\\mspy\\mspy.exe".to_string()),
-        cmdline: None,
+        command_line: None,
     })];
 
     let (_, findings) = scoring.evaluate(&mspy_evidence);
@@ -156,4 +156,30 @@ fn test_personal_safety_mode_blocks_removal() {
     let rm = sentinel_removal::RemovalManager::new(true);
     let res = rm.remove_finding(&findings[0]);
     assert!(res.is_err(), "Personal Safety Mode must forbid removal");
+}
+
+#[test]
+fn test_c2_network_beacon_alert() {
+    let rules = get_embedded_rules();
+    let scoring = ScoringEngine::new(&rules, Lang::En);
+
+    let c2_evidence = vec![
+        Evidence::new(
+            EvidenceType::NetworkSocketListener,
+            "NetworkCollector",
+            "Active outbound connection to 198.51.100.1",
+            "Remote: api.flexispy.com:443",
+        )
+        .with_data(EvidenceData::Network {
+            protocol: "TCP".to_string(),
+            local_address: "192.168.1.50:54321".to_string(),
+            remote_address: Some("api.flexispy.com:443".to_string()),
+            pid: Some(9999),
+        }),
+    ];
+
+    let (verdict, findings) = scoring.evaluate(&c2_evidence);
+    assert_eq!(verdict, Verdict::SurveillanceLikely);
+    assert!(findings.len() >= 1);
+    assert!(findings.iter().any(|f| f.rule_id == "stalkerware_c2_network_beacon"));
 }

@@ -1,0 +1,42 @@
+id: "CORP-WIN-0015"
+name: "Wondershare FamiSafe"
+version: 1
+category: "OrganizationManaged"
+severity: "Medium"
+base_confidence: 0.86
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "Wondershare Technology"
+description: "Parental monitoring tool tracking application usage, web browsing, and location with periodic background reporting."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "famisafe.exe"
+    - name: "famisafe_service.exe"
+    - name: "ws_monitor.exe"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\Wondershare\\FamiSafe"
+  services:
+    - name: "FamiSafeService"
+  paths:
+    - "C:\\Program Files\\Wondershare\\FamiSafe\\"
+    - "C:\\ProgramData\\Wondershare\\FamiSafe\\"
+  network_domains:
+    - "famisafe.wondershare.com"
+
+removal:
+  services_to_stop:
+    - "FamiSafeService"
+  processes_to_kill:
+    - "famisafe.exe"
+    - "famisafe_service.exe"
+  manual_steps_windows: |
+    1. Uninstall via Windows Apps & Features.
+    2. Or terminate processes and stop FamiSafeService.
+
+references:
+  - "https://famisafe.wondershare.com/"

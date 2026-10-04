@@ -1,0 +1,57 @@
+id: "STK-WIN-0048"
+name: "WebWatcher Computer Monitor"
+version: 1
+category: "KeyboardCapture"
+severity: "Critical"
+base_confidence: 0.94
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "Awareness Technologies"
+description: "Hidden computer monitoring tool that records keystrokes, social messaging, and takes continuous screen captures."
+is_legitimate_use_likely: false
+
+detection:
+  processes:
+    - name: "webwatcher.exe"
+    - name: "wwsvc.exe"
+    - name: "awtsvc.exe"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\Awareness Technologies"
+    - hive: "HKLM"
+      path: "SOFTWARE\\WebWatcher"
+  services:
+    - name: "WWSvc"
+    - name: "AwtSvc"
+  paths:
+    - "C:\\Program Files\\WebWatcher\\"
+    - "C:\\ProgramData\\WebWatcher\\"
+  network_domains:
+    - "webwatcher.com"
+    - "webwatcherdata.com"
+    - "api.awarenesstechnologies.com"
+
+removal:
+  services_to_stop:
+    - "WWSvc"
+    - "AwtSvc"
+  services_to_delete:
+    - "WWSvc"
+    - "AwtSvc"
+  processes_to_kill:
+    - "webwatcher.exe"
+    - "wwsvc.exe"
+    - "awtsvc.exe"
+  paths_to_remove:
+    - "C:\\Program Files\\WebWatcher"
+    - "C:\\ProgramData\\WebWatcher"
+  manual_steps_windows: |
+    1. Stop and remove services WWSvc and AwtSvc.
+    2. Terminate webwatcher.exe and wwsvc.exe.
+    3. Delete C:\ProgramData\WebWatcher directory.
+
+references:
+  - "https://stopstalkerware.org/"
+  - "https://attack.mitre.org/techniques/T1056/001/"

@@ -11,13 +11,13 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Sentinel Contributors"]
 license = "Apache-2.0"
-repository = "https://github.com/sentinel-sec/sentinel"
-homepage = "https://github.com/sentinel-sec/sentinel"
-documentation = "https://github.com/sentinel-sec/sentinel#readme"
+repository = "https://github.com/jamixm4-crypto/sentinel"
+homepage = "https://github.com/jamixm4-crypto/sentinel"
+documentation = "https://github.com/jamixm4-crypto/sentinel#readme"
 readme = "README.md"
 keywords = ["security", "spyware", "stalkerware", "detector", "privacy"]
 categories = ["command-line-utilities", "os"]

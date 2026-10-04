@@ -1,5 +1,6 @@
 use sentinel_core::{
-    Category, Evidence, EvidenceData, EvidenceType, Lang, RemovalPolicy, Verdict,
+    Category, Evidence, EvidenceData, EvidenceType, Finding, Lang, PlatformInfo, PrivilegeLevel,
+    RemovalPolicy, Severity, Verdict,
 };
 use sentinel_rules::get_embedded_rules;
 use sentinel_scoring::ScoringEngine;
@@ -8,7 +9,7 @@ use sentinel_scoring::ScoringEngine;
 fn test_embedded_rules_validity() {
     let rules = get_embedded_rules();
     assert!(!rules.is_empty(), "Embedded rules should not be empty");
-    assert!(rules.len() >= 30, "Expected at least 30 embedded rules");
+    assert!(rules.len() >= 75, "Expected at least 75 embedded rules");
 
     for r in &rules {
         assert!(!r.id.is_empty(), "Rule ID must not be empty");
@@ -155,4 +156,30 @@ fn test_personal_safety_mode_blocks_removal() {
     let rm = sentinel_removal::RemovalManager::new(true);
     let res = rm.remove_finding(&findings[0]);
     assert!(res.is_err(), "Personal Safety Mode must forbid removal");
+}
+
+#[test]
+fn test_c2_network_beacon_alert() {
+    let rules = get_embedded_rules();
+    let scoring = ScoringEngine::new(&rules, Lang::En);
+
+    let c2_evidence = vec![
+        Evidence::new(
+            EvidenceType::NetworkSocketListener,
+            "NetworkCollector",
+            "Active outbound connection to 198.51.100.1",
+            "Remote: api.flexispy.com:443",
+        )
+        .with_data(EvidenceData::Network {
+            protocol: "TCP".to_string(),
+            local_address: "192.168.1.50:54321".to_string(),
+            remote_address: Some("api.flexispy.com:443".to_string()),
+            pid: Some(9999),
+        }),
+    ];
+
+    let (verdict, findings) = scoring.evaluate(&c2_evidence);
+    assert_eq!(verdict, Verdict::SurveillanceLikely);
+    assert!(findings.len() >= 1);
+    assert!(findings.iter().any(|f| f.rule_id == "stalkerware_c2_network_beacon"));
 }

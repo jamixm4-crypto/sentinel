@@ -1,0 +1,44 @@
+id: "STK-WIN-0052"
+name: "Micro Keylogger"
+version: 1
+category: "KeyboardCapture"
+severity: "Critical"
+base_confidence: 0.93
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "Micro Keylogger"
+description: "Invisible keylogger software logging passwords, keystrokes, clipboard changes, and transmitting logs to remote servers."
+is_legitimate_use_likely: false
+
+detection:
+  processes:
+    - name: "microkey.exe"
+    - name: "mksvc.exe"
+    - name: "mkl.exe"
+  registry_keys:
+    - hive: "HKCU"
+      path: "Software\\MicroKeylogger"
+    - hive: "HKLM"
+      path: "SOFTWARE\\MicroKeylogger"
+  paths:
+    - "C:\\Program Files\\Micro Keylogger\\"
+    - "C:\\Windows\\system32\\mksvc.exe"
+  network_domains:
+    - "microkeylogger.com"
+
+removal:
+  processes_to_kill:
+    - "microkey.exe"
+    - "mksvc.exe"
+    - "mkl.exe"
+  paths_to_remove:
+    - "C:\\Program Files\\Micro Keylogger"
+  manual_steps_windows: |
+    1. End microkey.exe via Task Manager.
+    2. Delete C:\Program Files\Micro Keylogger directory.
+    3. Delete registry key HKCU\Software\MicroKeylogger.
+
+references:
+  - "https://stopstalkerware.org/"
+  - "https://attack.mitre.org/techniques/T1056/001/"

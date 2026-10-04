@@ -1,0 +1,56 @@
+id: "STK-WIN-0045"
+name: "SentryPC Activity Logger"
+version: 1
+category: "KeyboardCapture"
+severity: "High"
+base_confidence: 0.89
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "SentryPC"
+description: "Cloud-based monitoring software recording keystrokes, application usage, chat transcripts, and desktop snapshots."
+is_legitimate_use_likely: false
+safety_warning: "Uninstalling SentryPC may notify the account administrator of client unregistration."
+
+detection:
+  processes:
+    - name: "sentrypc.exe"
+    - name: "spcagent.exe"
+    - name: "spcsvc.exe"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\SentryPC"
+    - hive: "HKCU"
+      path: "Software\\SentryPC"
+  services:
+    - name: "SPCAgent"
+    - name: "SentryPCService"
+  paths:
+    - "C:\\Program Files\\SentryPC\\"
+    - "C:\\ProgramData\\SentryPC\\"
+  network_domains:
+    - "sentrypc.com"
+
+removal:
+  services_to_stop:
+    - "SPCAgent"
+    - "SentryPCService"
+  services_to_delete:
+    - "SPCAgent"
+    - "SentryPCService"
+  processes_to_kill:
+    - "sentrypc.exe"
+    - "spcagent.exe"
+    - "spcsvc.exe"
+  paths_to_remove:
+    - "C:\\Program Files\\SentryPC"
+    - "C:\\ProgramData\\SentryPC"
+  manual_steps_windows: |
+    1. Stop SentryPCService in services.msc.
+    2. End sentrypc.exe and spcagent.exe processes.
+    3. Delete C:\ProgramData\SentryPC.
+
+references:
+  - "https://stopstalkerware.org/"
+  - "https://attack.mitre.org/techniques/T1056/001/"

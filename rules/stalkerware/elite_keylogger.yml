@@ -1,0 +1,52 @@
+id: "STK-WIN-0051"
+name: "Elite Keylogger"
+version: 1
+category: "KeyboardCapture"
+severity: "Critical"
+base_confidence: 0.96
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "WideStep Security Software"
+description: "Kernel-level keylogger operating invisible keyboard filter drivers, clipboard monitors, and stealth file persistence."
+is_legitimate_use_likely: false
+
+detection:
+  processes:
+    - name: "ekl.exe"
+    - name: "eklsvc.exe"
+    - name: "widestep.exe"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\WideStep"
+    - hive: "HKLM"
+      path: "SYSTEM\\CurrentControlSet\\Services\\eklfilter"
+  services:
+    - name: "eklfilter"
+    - name: "EliteKeyloggerService"
+  paths:
+    - "C:\\Program Files\\Elite Keylogger\\"
+    - "C:\\Windows\\System32\\drivers\\eklfilter.sys"
+  network_domains:
+    - "widestep.com"
+
+removal:
+  services_to_stop:
+    - "EliteKeyloggerService"
+  services_to_delete:
+    - "eklfilter"
+    - "EliteKeyloggerService"
+  processes_to_kill:
+    - "ekl.exe"
+    - "eklsvc.exe"
+  paths_to_remove:
+    - "C:\\Program Files\\Elite Keylogger"
+    - "C:\\Windows\\System32\\drivers\\eklfilter.sys"
+  manual_steps_windows: |
+    1. Stop services eklfilter and EliteKeyloggerService.
+    2. Remove C:\Windows\System32\drivers\eklfilter.sys.
+    3. Delete HKLM\SOFTWARE\WideStep.
+
+references:
+  - "https://attack.mitre.org/techniques/T1056/001/"

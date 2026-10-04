@@ -1,0 +1,40 @@
+id: "RMT-WIN-0016"
+name: "TightVNC Server"
+version: 1
+category: "RemoteAccess"
+severity: "Medium"
+base_confidence: 0.92
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "linux"
+vendor: "GlavSoft LLC"
+description: "VNC remote administration server providing unattended remote desktop access, keyboard/mouse control, and screen broadcasting."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "tvnserver.exe"
+    - name: "tightvnc.exe"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\TightVNC"
+  services:
+    - name: "tvnserver"
+    - name: "TightVNC Server"
+  paths:
+    - "C:\\Program Files\\TightVNC\\"
+  network_domains:
+    - "tightvnc.com"
+
+removal:
+  services_to_stop:
+    - "tvnserver"
+  processes_to_kill:
+    - "tvnserver.exe"
+  manual_steps_windows: |
+    1. Stop tvnserver service via services.msc.
+    2. Uninstall TightVNC via Windows Settings -> Installed Apps.
+
+references:
+  - "https://attack.mitre.org/techniques/T1021/005/"

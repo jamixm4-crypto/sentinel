@@ -1,0 +1,44 @@
+id: "CORP-WIN-0014"
+name: "Qustodio Parental & School Monitor"
+version: 1
+category: "OrganizationManaged"
+severity: "Medium"
+base_confidence: 0.88
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "Qustodio LLC"
+description: "Cross-platform activity tracker that intercepts web traffic via local proxy/LSP, logs application time, and enforces restrictions."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "qupdate.exe"
+    - name: "qapp.exe"
+    - name: "qservice.exe"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\Qustodio"
+  services:
+    - name: "qservice"
+    - name: "QustodioService"
+  paths:
+    - "C:\\Program Files\\Qustodio\\"
+    - "C:\\Program Files (x86)\\Qustodio\\"
+  network_domains:
+    - "qustodio.com"
+
+removal:
+  services_to_stop:
+    - "qservice"
+  processes_to_kill:
+    - "qupdate.exe"
+    - "qapp.exe"
+    - "qservice.exe"
+  manual_steps_windows: |
+    1. Uninstall Qustodio via Windows Settings -> Apps & Features (requires parental credentials).
+    2. Alternatively stop QustodioService in services.msc.
+
+references:
+  - "https://www.qustodio.com/"
