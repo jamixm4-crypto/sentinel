@@ -1,0 +1,35 @@
+name: Missing Stalkerware Signature
+description: Propose a new detection signature for uncataloged spyware or stalkerware
+labels: ["new-signature", "rules"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help us expand Sentinel's coverage against surveillance software.
+  - type: input
+    id: tool-name
+    attributes:
+      label: Software Name
+      placeholder: e.g., ShadowLogger Pro
+    validations:
+      required: true
+  - type: checkboxes
+    id: platforms
+    attributes:
+      label: Affected Platforms
+      options:
+        - label: Windows
+        - label: Linux
+        - label: macOS
+  - type: textarea
+    id: technical-iocs
+    attributes:
+      label: Technical Indicators of Compromise (IoCs)
+      description: Process names, registry keys, services, installation paths, or network domains.
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: Public Research & References
+      description: Coalition Against Stalkerware, blog posts, malware analysis articles.

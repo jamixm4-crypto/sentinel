@@ -1,0 +1,30 @@
+name: False Positive Report
+description: Report a legitimate software incorrectly flagged as surveillance/spyware
+labels: ["false-positive", "rules"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a false positive. We strive for high precision and zero alarmism.
+  - type: input
+    id: software-name
+    attributes:
+      label: Software Name & Developer
+      description: Name of the program incorrectly flagged.
+      placeholder: e.g., OpenBroadcaster / OBS Studio
+    validations:
+      required: true
+  - type: textarea
+    id: finding-details
+    attributes:
+      label: Finding Details
+      description: Copy the Finding ID and technical details from the HTML or terminal report.
+    validations:
+      required: true
+  - type: textarea
+    id: justification
+    attributes:
+      label: Why is this software legitimate?
+      description: Official website, open-source repository, or vendor verification link.
+    validations:
+      required: true
