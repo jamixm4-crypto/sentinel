@@ -60,7 +60,7 @@ sentinel scan
 ## Ключевые принципы
 
 - **Безопасность по умолчанию (Read-only)**. Обычный скан никогда не завершает процессы, не удаляет ключи реестра и не меняет конфигурацию системы.
-- **Ноль телеметрии**. Никаких запросов во внешние сервисы, трекеров, облачных проверок или сбора аналитики. Все 60 сигнатур и HTML-шаблоны встроены внутрь бинарного файла на этапе компиляции.
+- **Ноль телеметрии**. Никаких запросов во внешние сервисы, трекеров, облачных проверок или сбора аналитики. Все 75 сигнатур, база 280+ C2 доменов и HTML-шаблоны встроены внутрь бинарного файла на этапе компиляции.
 - **Работа без прав администратора**. Скан корректно выполняется от обычного пользователя. Если требуются повышенные привилегии (например, для проверки драйверов клавиатурных фильтров в реестре или системных каталогов `/etc`), утилита явно сообщает, какие именно проверки были пропущены из-за нехватки прав.
 - **Минимальный форензик-след**. Sentinel не регистрирует себя в автозагрузке, не создаёт постоянных служб и не чистит за собой системные журналы (Event Log / syslog), так как очистка журналов — поведение вредоносных программ.
 
@@ -68,15 +68,16 @@ sentinel scan
 
 ## Что именно ищет Sentinel
 
-Сигнатурная база содержит **60 мультимодальных правил**, покрывающих основные векторы наблюдения:
+Сигнатурная база содержит **75 мультимодальных правил** и встроенный **C2 Threat Intelligence Matcher** (280+ верифицированных C2 хостов из базы AssoEchap и TinyCheck), покрывающих основные векторы наблюдения:
 
 | Категория | Примеры обнаруживаемого софта | Индикаторы |
 | :--- | :--- | :--- |
-| **Перехват клавиатуры (KeyboardCapture)** | Spyrix, Refog, Actual Keylogger, mSpy, FlexiSPY, iKeyMonitor, TheTruthSpy, Wolfeye, Cerberus, RemoteSpy, PC Pandora, SpyBubble | Глобальные хуки, импорты Win32 API (`SetWindowsHookEx`, `GetAsyncKeyState`), фильтр-драйверы `{4D36E96B...}` в `UpperFilters`, пути автозагрузки, скрытые службы |
-| **Захват экрана (ScreenCapture)** | pcTattletale, Kickidler, несанкционированные трансляторы рабочего стола | Активные сессии CapabilityAccessManager ConsentStore (`graphicsCaptureProgrammatic`), видеопотоки PipeWire в Linux |
-| **Удалённый доступ (RemoteAccess)** | TeamViewer, AnyDesk, RustDesk, ScreenConnect, NetSupport Manager, Splashtop, VNC (RealVNC/UltraVNC/TightVNC), DWService, Parsec, Radmin, Chrome Remote Desktop, Ammyy Admin, LogMeIn | Слушающие TCP-порты (5900, 3389, 7070), службы неконтролируемого доступа, сохранённые ID сессий |
-| **Учёт рабочего времени (ProcessWatcher)** | Hubstaff, Time Doctor, DeskTime, Monitask, Insightful (Workpuls), CleverControl, Rhubarb | Трассировка активных окон, регулярные фоновые снимки экрана, отслеживание ptrace |
-| **Корпоративные EDR / MDM (OrganizationManaged)** | CrowdStrike Falcon, SentinelOne, Microsoft Intune, VMware Carbon Black, Jamf Pro, Mosyle, Kandji, Microsoft Defender for Endpoint | Профили управления MDM, системные агенты EDR, службы защиты хоста |
+| **Перехват клавиатуры (KeyboardCapture)** | Spyrix, Refog, Actual Keylogger, mSpy, FlexiSPY, iKeyMonitor, TheTruthSpy, Wolfeye, Cerberus, RemoteSpy, PC Pandora, SpyBubble, Spapp Monitoring, SentryPC, SpyTech SpyAgent, WebWatcher, Elite Keylogger, Micro Keylogger | Глобальные хуки, импорты Win32 API (`SetWindowsHookEx`, `RegisterRawInputDevices` с `RIDEV_INPUTSINK`), фильтр-драйверы `{4D36E96B...}` в `UpperFilters`, пути автозагрузки, скрытые службы |
+| **Захват экрана и медиа (ScreenCapture)** | pcTattletale, Kickidler, SoftActivity TS Monitor, NetVizor, CleverControl Cloud, несанкционированные трансляторы рабочего стола | Фоновые сессии CapabilityAccessManager ConsentStore (`webcam`, `microphone`, `graphicsCaptureProgrammatic`), видеопотоки PipeWire в Linux |
+| **Сетевая связь с C2 (NetworkActivity)** | Командные серверы FlexiSPY, mSpy, Hoverwatch, Snoopza, WebWatcher, Spylix, KidLogger, Spyic | Активные исходящие сокеты и записи системного DNS-кеша (`ipconfig /displaydns`), сопоставляемые с 280+ известными C2 доменами |
+| **Удалённый доступ (RemoteAccess)** | TeamViewer, AnyDesk, RustDesk, ScreenConnect, NetSupport Manager, Splashtop, VNC (RealVNC/UltraVNC/TightVNC), DWService, Parsec, Radmin, Chrome Remote Desktop, Ammyy Admin, LogMeIn / GoToMyPC | Слушающие TCP-порты (5900, 3389, 7070, 7906), службы неконтролируемого доступа, сохранённые конфигурации |
+| **Учёт рабочего времени (ProcessWatcher)** | Teramind, ActivTrak, Hubstaff, Time Doctor, DeskTime, Monitask, Insightful (Workpuls), CleverControl, Rhubarb | Трассировка активных окон, регулярные фоновые снимки экрана, отслеживание ptrace |
+| **Корпоративные EDR / MDM (OrganizationManaged)** | CrowdStrike Falcon, SentinelOne, Microsoft Intune, VMware Carbon Black, Jamf Pro, Mosyle, Kandji, Microsoft Defender for Endpoint, Qustodio, FamiSafe | Профили управления MDM, системные агенты EDR, службы защиты хоста |
 | **Легитимное ПО с функциями захвата (Info)** | OBS Studio, Zoom, Microsoft Teams, Discord, Steam Overlay, NVIDIA ShadowPlay, AutoHotkey, Менеджеры паролей (1Password, Bitwarden, KeePass) | Попадают в отчёт с пометкой `Info` и явным разъяснением назначения, чтобы исключить ложную тревогу |
 
 ---
