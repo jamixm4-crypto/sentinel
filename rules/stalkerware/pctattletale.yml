@@ -1,0 +1,39 @@
+id: "STK-WIN-0035"
+name: "pcTattletale Monitoring Software"
+version: 1
+category: "ScreenCapture"
+severity: "Critical"
+base_confidence: 0.90
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "pcTattletale"
+description: "Stealth employee and spouse monitoring software that continuously captures video of user screens and keystrokes."
+is_legitimate_use_likely: false
+
+detection:
+  processes:
+    - name: "pctattletale.exe"
+    - name: "pt.exe"
+  services:
+    - name: "pctattletale service"
+  paths:
+    - "C:\\ProgramData\\pctattletale\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\pcTattletale"
+
+removal:
+  services_to_stop:
+    - "pctattletale service"
+  services_to_delete:
+    - "pctattletale service"
+  processes_to_kill:
+    - "pctattletale.exe"
+    - "pt.exe"
+  paths_to_remove:
+    - "C:\\ProgramData\\pctattletale"
+  manual_steps_windows: |
+    1. Terminate pt.exe in Task Manager.
+    2. Run Command Prompt as Admin and delete service `sc delete "pctattletale service"`.
+    3. Delete directory C:\ProgramData\pctattletale.

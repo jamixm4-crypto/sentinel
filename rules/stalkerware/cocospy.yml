@@ -1,0 +1,32 @@
+id: "STK-WIN-0045"
+name: "Cocospy Desktop Sync Agent"
+version: 1
+category: "SuspiciousPersistence"
+severity: "High"
+base_confidence: 0.85
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "Cocospy"
+description: "Desktop client for cloud-based phone and activity monitoring sync."
+is_legitimate_use_likely: false
+
+detection:
+  processes:
+    - name: "cocospy.exe"
+    - name: "syncagent.exe"
+  services:
+    - name: "CocospySync"
+  paths:
+    - "C:\\ProgramData\\Cocospy\\"
+  registry_keys:
+    - hive: "HKCU"
+      path: "Software\\Cocospy"
+
+removal:
+  processes_to_kill:
+    - "cocospy.exe"
+    - "syncagent.exe"
+  paths_to_remove:
+    - "C:\\ProgramData\\Cocospy"

@@ -1,0 +1,40 @@
+id: "RAT-WIN-0001"
+name: "TeamViewer Remote Control"
+version: 1
+category: "RemoteAccess"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "macos"
+  - "linux"
+vendor: "TeamViewer Germany GmbH"
+description: "Widely used remote desktop software. Often legitimate, but frequently abused in tech support scams or unauthorized remote access."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "TeamViewer.exe"
+    - name: "TeamViewer_Service.exe"
+    - name: "teamviewerd"
+  services:
+    - name: "TeamViewer"
+  paths:
+    - "C:\\Program Files\\TeamViewer\\"
+    - "C:\\Program Files (x86)\\TeamViewer\\"
+    - "/Applications/TeamViewer.app"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\TeamViewer"
+
+removal:
+  services_to_stop:
+    - "TeamViewer"
+  processes_to_kill:
+    - "TeamViewer.exe"
+    - "TeamViewer_Service.exe"
+  manual_steps_windows: |
+    1. If you didn't install TeamViewer yourself, terminate TeamViewer.exe.
+    2. Uninstall via Windows Settings -> Apps -> Installed Apps.
+    3. Ensure no unattended access password was configured without your knowledge.

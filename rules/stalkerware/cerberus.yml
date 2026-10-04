@@ -1,0 +1,26 @@
+id: "STK-ALL-0075"
+name: "Cerberus Personal Tracker"
+version: 1
+category: "KeyboardCapture"
+severity: "Critical"
+base_confidence: 0.90
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "Cerberus"
+description: "Anti-theft / surveillance suite with remote screen, keystroke and camera access."
+is_legitimate_use_likely: false
+
+detection:
+  processes:
+    - name: "cerberus.exe"
+    - name: "cerberusd"
+  paths:
+    - "C:\\ProgramData\\Cerberus\\"
+
+removal:
+  processes_to_kill:
+    - "cerberus.exe"
+  paths_to_remove:
+    - "C:\\ProgramData\\Cerberus"

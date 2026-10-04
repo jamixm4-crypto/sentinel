@@ -1,0 +1,29 @@
+id: "RAT-ALL-0060"
+name: "LogMeIn / GoTo Resolve Remote Access"
+version: 1
+category: "RemoteAccess"
+severity: "Info"
+base_confidence: 0.90
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "GoTo Technologies"
+description: "Cloud-based remote access and IT support client."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "LogMeIn.exe"
+    - name: "LogMeInSystray.exe"
+    - name: "LMIGuardian.exe"
+  services:
+    - name: "LogMeIn"
+  paths:
+    - "C:\\Program Files (x86)\\LogMeIn\\"
+
+removal:
+  services_to_stop:
+    - "LogMeIn"
+  processes_to_kill:
+    - "LogMeIn.exe"

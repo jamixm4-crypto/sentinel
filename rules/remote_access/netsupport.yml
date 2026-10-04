@@ -1,0 +1,33 @@
+id: "RAT-WIN-0020"
+name: "NetSupport Manager Remote Access Client"
+version: 1
+category: "RemoteAccess"
+severity: "High"
+base_confidence: 0.85
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+vendor: "NetSupport Ltd"
+description: "Remote administration tool. Frequently repackaged as 'NetSupport RAT' in phishing campaigns."
+is_legitimate_use_likely: false
+
+detection:
+  processes:
+    - name: "client32.exe"
+    - name: "pcicfgui.exe"
+  services:
+    - name: "client32"
+  paths:
+    - "C:\\Program Files (x86)\\NetSupport\\NetSupport Manager\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\NetSupport"
+
+removal:
+  services_to_stop:
+    - "client32"
+  processes_to_kill:
+    - "client32.exe"
+  manual_steps_windows: |
+    1. Terminate client32.exe.
+    2. Check startup and delete folder C:\Program Files (x86)\NetSupport.

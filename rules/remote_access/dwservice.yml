@@ -1,0 +1,30 @@
+id: "RAT-ALL-0035"
+name: "DWService Remote Access Agent"
+version: 1
+category: "RemoteAccess"
+severity: "Medium"
+base_confidence: 0.85
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "linux"
+  - "macos"
+vendor: "DWService"
+description: "Open and free remote desktop access agent allowing remote terminal, screen view, and file transfer."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "dwagent.exe"
+    - name: "dwagent"
+  services:
+    - name: "DWAgent"
+  paths:
+    - "C:\\Program Files\\DWAgent\\"
+    - "/usr/share/dwagent/"
+
+removal:
+  services_to_stop:
+    - "DWAgent"
+  processes_to_kill:
+    - "dwagent.exe"

@@ -1,0 +1,27 @@
+id: "LEG-ALL-0001"
+name: "OBS Studio (Open Broadcaster Software)"
+version: 1
+category: "ScreenCapture"
+severity: "Info"
+base_confidence: 0.95
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "macos"
+  - "linux"
+vendor: "OBS Project"
+description: "Free and open source software for video recording and live streaming. Legitimate tool that captures screen and audio."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "obs64.exe"
+    - name: "obs32.exe"
+    - name: "obs"
+  paths:
+    - "C:\\Program Files\\obs-studio\\"
+    - "/Applications/OBS.app"
+
+removal:
+  manual_steps_windows: |
+    Standard media creation software. To uninstall, use Windows Settings -> Installed Apps.

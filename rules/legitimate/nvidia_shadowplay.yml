@@ -1,0 +1,18 @@
+id: "LEG-WIN-0025"
+name: "NVIDIA GeForce Experience ShadowPlay"
+version: 1
+category: "ScreenCapture"
+severity: "Info"
+base_confidence: 0.95
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+vendor: "NVIDIA Corporation"
+description: "Hardware-accelerated screen recorder and gameplay capture overlay."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "NVIDIA Share.exe"
+    - name: "nvspcaps64.exe"
+    - name: "nvcontainer.exe"

@@ -1,0 +1,58 @@
+id: "STK-WIN-0010"
+name: "mSpy Desktop Monitoring Agent"
+version: 1
+category: "KeyboardCapture"
+severity: "Critical"
+base_confidence: 0.90
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "mSpy / Altercon Group"
+description: "Covert surveillance and stalkerware suite recording keystrokes, browser history, screenshots, and messaging activity."
+is_legitimate_use_likely: false
+safety_warning: "mSpy synchronizes logs with a remote server. Deletion may notify the account holder."
+
+detection:
+  processes:
+    - name: "mspy.exe"
+    - name: "sysnet.exe"
+    - name: "msupdate.exe"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\mspy"
+    - hive: "HKCU"
+      path: "Software\\mspy"
+  services:
+    - name: "MSpyService"
+    - name: "NetworkSync"
+  paths:
+    - "C:\\ProgramData\\mspy\\"
+    - "C:\\Program Files\\mSpy\\"
+  network_domains:
+    - "mspy.com"
+    - "mspyonline.com"
+
+removal:
+  services_to_stop:
+    - "MSpyService"
+    - "NetworkSync"
+  services_to_delete:
+    - "MSpyService"
+  processes_to_kill:
+    - "mspy.exe"
+    - "sysnet.exe"
+  paths_to_remove:
+    - "C:\\ProgramData\\mspy"
+    - "C:\\Program Files\\mSpy"
+  manual_steps_windows: |
+    1. Terminate mspy.exe and sysnet.exe in Task Manager.
+    2. Stop and delete the service: `sc.exe stop MSpyService && sc.exe delete MSpyService`.
+    3. Delete folders: `C:\ProgramData\mspy` and `C:\Program Files\mSpy`.
+    4. Delete registry key: `HKLM\SOFTWARE\mspy`.
+  manual_steps_macos: |
+    1. Unload agent: `launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.mspy.mac.plist`
+    2. Delete files: `~/Library/Application Support/mSpy/`
+
+references:
+  - "https://stopstalkerware.org/"

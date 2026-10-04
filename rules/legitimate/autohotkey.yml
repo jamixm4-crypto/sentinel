@@ -1,0 +1,21 @@
+id: "LEG-WIN-0030"
+name: "AutoHotkey Automation Utility"
+version: 1
+category: "KeyboardCapture"
+severity: "Low"
+base_confidence: 0.85
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+vendor: "AutoHotkey Foundation"
+description: "Scripting language and macro tool using keyboard hooks (WH_KEYBOARD_LL) for user-defined hotkeys and macros."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "AutoHotkey.exe"
+    - name: "AutoHotkey64.exe"
+    - name: "AutoHotkey32.exe"
+    - name: "AutoHotkeyUX.exe"
+  paths:
+    - "C:\\Program Files\\AutoHotkey\\"

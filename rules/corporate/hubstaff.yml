@@ -1,0 +1,34 @@
+id: "COR-WIN-0010"
+name: "Hubstaff Time Tracking & Productivity Monitor"
+version: 1
+category: "ProcessWatcher"
+severity: "Medium"
+base_confidence: 0.85
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "macos"
+  - "linux"
+vendor: "Netsoft Holdings / Hubstaff"
+description: "Time tracking application with screenshot recording, activity level metrics, and app/URL tracking."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "HubstaffClient.exe"
+    - name: "Hubstaff.exe"
+    - name: "HubstaffCLI"
+  services:
+    - name: "HubstaffService"
+  paths:
+    - "C:\\Program Files\\Hubstaff\\"
+    - "/Applications/Hubstaff.app"
+    - "~/Hubstaff/"
+
+removal:
+  processes_to_kill:
+    - "HubstaffClient.exe"
+    - "Hubstaff.exe"
+  manual_steps_windows: |
+    1. Exit Hubstaff from the system tray.
+    2. Go to Windows Settings -> Apps -> Installed Apps -> Uninstall Hubstaff.

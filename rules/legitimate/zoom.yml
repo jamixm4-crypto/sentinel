@@ -1,0 +1,22 @@
+id: "LEG-ALL-0005"
+name: "Zoom Workplace"
+version: 1
+category: "ScreenCapture"
+severity: "Info"
+base_confidence: 0.95
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "macos"
+  - "linux"
+vendor: "Zoom Video Communications"
+description: "Video conferencing tool that captures screen shares, camera, and microphone with user participation."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "Zoom.exe"
+    - name: "zoom"
+  paths:
+    - "%AppData%\\Zoom\\"
+    - "/Applications/zoom.us.app"

@@ -1,0 +1,28 @@
+id: "RAT-WIN-0055"
+name: "Ammyy Admin Remote Control"
+version: 1
+category: "RemoteAccess"
+severity: "Medium"
+base_confidence: 0.85
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+vendor: "Ammyy Group"
+description: "Remote desktop sharing and file transfer tool, frequently abused by unauthorized actors."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "AA_v3.exe"
+    - name: "Ammyy Admin.exe"
+    - name: "Ammyy.exe"
+  services:
+    - name: "Ammyy Admin"
+  paths:
+    - "C:\\Program Files\\Ammyy Admin\\"
+
+removal:
+  services_to_stop:
+    - "Ammyy Admin"
+  processes_to_kill:
+    - "Ammyy.exe"

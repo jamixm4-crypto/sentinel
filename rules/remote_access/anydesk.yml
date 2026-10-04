@@ -1,0 +1,38 @@
+id: "RAT-WIN-0005"
+name: "AnyDesk Remote Desktop"
+version: 1
+category: "RemoteAccess"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "macos"
+  - "linux"
+vendor: "AnyDesk Software GmbH"
+description: "Proprietary remote desktop software. Often legitimate, but commonly abused in unauthorized access incidents."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "AnyDesk.exe"
+    - name: "anydesk"
+  services:
+    - name: "AnyDesk"
+    - name: "AnyDesk Service"
+  paths:
+    - "C:\\Program Files (x86)\\AnyDesk\\"
+    - "C:\\ProgramData\\AnyDesk\\"
+    - "/Applications/AnyDesk.app"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\AnyDesk"
+
+removal:
+  services_to_stop:
+    - "AnyDesk"
+  processes_to_kill:
+    - "AnyDesk.exe"
+  manual_steps_windows: |
+    1. Terminate AnyDesk.exe.
+    2. Uninstall via Windows Settings -> Apps -> Installed Apps.

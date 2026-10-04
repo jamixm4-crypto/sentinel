@@ -1,0 +1,25 @@
+id: "STK-WIN-0070"
+name: "SpyBubble Monitoring Tool"
+version: 1
+category: "KeyboardCapture"
+severity: "Critical"
+base_confidence: 0.90
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "SpyBubble"
+description: "Hidden spyware tool marketed for tracking relationships and personal devices."
+is_legitimate_use_likely: false
+
+detection:
+  processes:
+    - name: "spybubble.exe"
+    - name: "sbb.exe"
+  paths:
+    - "C:\\ProgramData\\SpyBubble\\"
+
+removal:
+  processes_to_kill:
+    - "spybubble.exe"
+  paths_to_remove:
+    - "C:\\ProgramData\\SpyBubble"

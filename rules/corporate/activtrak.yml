@@ -1,0 +1,36 @@
+id: "COR-WIN-0005"
+name: "ActivTrak Workforce Intelligence Agent"
+version: 1
+category: "OrganizationManaged"
+severity: "Info"
+base_confidence: 0.90
+removal_policy: "DoNotRemove"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "ActivTrak Inc."
+description: "Cloud-based workforce analytics agent recording active application time, website usage, and user activity."
+is_legitimate_use_likely: true
+safety_warning: "Managed corporate endpoint agent. Automated removal is disabled."
+
+detection:
+  processes:
+    - name: "scthost.exe"
+    - name: "scthostp.exe"
+    - name: "agent.exe"
+  services:
+    - name: "SVCTCOM"
+  paths:
+    - "C:\\Program Files\\ActivTrak\\"
+    - "C:\\Program Files\\SVCTCOM\\"
+    - "/Library/Application Support/ActivTrak/"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\ActivTrak"
+
+removal:
+  manual_steps_windows: |
+    Enterprise software. Contact your organization's IT department to request agent removal.
+
+references:
+  - "https://www.activtrak.com/"

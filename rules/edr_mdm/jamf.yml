@@ -1,0 +1,24 @@
+id: "MDM-MAC-0001"
+name: "Jamf Pro Management Agent"
+version: 1
+category: "OrganizationManaged"
+severity: "Info"
+base_confidence: 0.95
+removal_policy: "DoNotRemove"
+platforms:
+  - "macos"
+vendor: "Jamf"
+description: "Apple device management solution standard for enterprise Mac fleets."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "jamf"
+    - name: "jamfAgent"
+  paths:
+    - "/usr/local/jamf/bin/jamf"
+    - "/Library/Application Support/JAMF/"
+
+removal:
+  manual_steps_macos: |
+    Device enrolled in Jamf MDM. Contact your workplace Mac administrator.

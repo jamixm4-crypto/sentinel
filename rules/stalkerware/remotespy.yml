@@ -1,0 +1,27 @@
+id: "STK-WIN-0080"
+name: "RemoteSpy Keylogger"
+version: 1
+category: "KeyboardCapture"
+severity: "Critical"
+base_confidence: 0.90
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "RemoteSpy"
+description: "Hidden keylogger sending keystrokes and screenshots to remote accounts."
+is_legitimate_use_likely: false
+
+detection:
+  processes:
+    - name: "remotespy.exe"
+    - name: "rspysvc.exe"
+  services:
+    - name: "RemoteSpy"
+  paths:
+    - "C:\\Program Files\\RemoteSpy\\"
+
+removal:
+  processes_to_kill:
+    - "remotespy.exe"
+  paths_to_remove:
+    - "C:\\Program Files\\RemoteSpy"

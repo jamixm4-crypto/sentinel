@@ -1,0 +1,37 @@
+id: "RAT-WIN-0030"
+name: "VNC Server (UltraVNC / TightVNC / RealVNC)"
+version: 1
+category: "RemoteAccess"
+severity: "Medium"
+base_confidence: 0.85
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "linux"
+  - "macos"
+vendor: "VNC Providers"
+description: "Virtual Network Computing server providing remote desktop viewing and input control over RFB protocol."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "winvnc.exe"
+    - name: "tvnserver.exe"
+    - name: "vncserver.exe"
+    - name: "x11vnc"
+  services:
+    - name: "uvnc_service"
+    - name: "tvnserver"
+    - name: "vncserver"
+  network_ports:
+    - 5900
+    - 5901
+    - 5902
+
+removal:
+  services_to_stop:
+    - "uvnc_service"
+    - "tvnserver"
+  processes_to_kill:
+    - "winvnc.exe"
+    - "tvnserver.exe"

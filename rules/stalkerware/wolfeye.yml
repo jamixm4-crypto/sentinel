@@ -1,0 +1,26 @@
+id: "STK-WIN-0060"
+name: "Wolfeye Keylogger"
+version: 1
+category: "KeyboardCapture"
+severity: "High"
+base_confidence: 0.85
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "Wolfeye Remote Screen"
+description: "Hidden background screen and keystroke logger delivering continuous screenshot capture."
+is_legitimate_use_likely: false
+
+detection:
+  processes:
+    - name: "wolfeye.exe"
+    - name: "we.exe"
+  paths:
+    - "C:\\Program Files\\Wolfeye\\"
+    - "%AppData%\\Wolfeye\\"
+
+removal:
+  processes_to_kill:
+    - "wolfeye.exe"
+  paths_to_remove:
+    - "C:\\Program Files\\Wolfeye"

@@ -1,0 +1,27 @@
+id: "COR-WIN-0035"
+name: "DeskTime Productivity Tracker"
+version: 1
+category: "ProcessWatcher"
+severity: "Low"
+base_confidence: 0.80
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "macos"
+  - "linux"
+vendor: "DeskTime"
+description: "Automatic time and URL/app usage tracker."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "desktime.exe"
+  registry_keys:
+    - hive: "HKCU"
+      path: "Software\\DeskTime"
+
+removal:
+  processes_to_kill:
+    - "desktime.exe"
+  manual_steps_windows: |
+    Exit DeskTime and uninstall from Windows Settings.

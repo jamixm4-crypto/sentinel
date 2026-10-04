@@ -1,0 +1,28 @@
+id: "STK-ALL-0065"
+name: "Eyezy Phone & Computer Monitor"
+version: 1
+category: "SuspiciousPersistence"
+severity: "Critical"
+base_confidence: 0.90
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "Fortunex / Eyezy"
+description: "Covert monitoring agent paired with cloud phone tracking."
+is_legitimate_use_likely: false
+
+detection:
+  processes:
+    - name: "eyezy.exe"
+    - name: "ezsync.exe"
+  paths:
+    - "C:\\ProgramData\\Eyezy\\"
+  network_domains:
+    - "eyezy.com"
+
+removal:
+  processes_to_kill:
+    - "eyezy.exe"
+  paths_to_remove:
+    - "C:\\ProgramData\\Eyezy"

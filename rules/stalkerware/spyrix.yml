@@ -1,0 +1,71 @@
+id: "STK-WIN-0042"
+name: "Spyrix Personal Monitor & Keylogger"
+version: 1
+category: "KeyboardCapture"
+severity: "High"
+base_confidence: 0.85
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "Spyrix Software"
+description: "Commercial keylogger and monitoring tool capable of logging keystrokes, taking screenshots, and recording webcam activity."
+is_legitimate_use_likely: false
+safety_warning: "Removing Spyrix may alert the person monitoring you if they check their dashboard."
+
+detection:
+  processes:
+    - name: "spx.exe"
+    - name: "spm.exe"
+    - name: "spyrix.exe"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\Spyrix"
+    - hive: "HKCU"
+      path: "Software\\Spyrix"
+    - hive: "HKLM"
+      path: "SOFTWARE\\WOW6432Node\\Spyrix"
+  services:
+    - name: "spxsvc"
+    - name: "Spyrix Service"
+  scheduled_tasks:
+    - pattern: "^Spyrix.*"
+  paths:
+    - "C:\\Program Files (x86)\\Spyrix Personal Monitor\\"
+    - "C:\\ProgramData\\Spyrix\\"
+  network_domains:
+    - "spyrix.com"
+    - "api.spyrix.com"
+
+removal:
+  uninstall_key: "HKLM\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Spyrix*"
+  services_to_stop:
+    - "spxsvc"
+  services_to_delete:
+    - "spxsvc"
+  processes_to_kill:
+    - "spx.exe"
+    - "spm.exe"
+    - "spyrix.exe"
+  paths_to_remove:
+    - "C:\\Program Files (x86)\\Spyrix Personal Monitor"
+    - "C:\\ProgramData\\Spyrix"
+  manual_steps_windows: |
+    1. Open Task Manager and terminate processes: spx.exe, spm.exe.
+    2. Open Windows Services (services.msc) and stop 'Spyrix Service' (spxsvc).
+    3. Run Command Prompt as Administrator and delete the service: `sc.exe delete spxsvc`.
+    4. Delete directories:
+       - C:\Program Files (x86)\Spyrix Personal Monitor
+       - C:\ProgramData\Spyrix
+    5. Open Registry Editor (regedit) and delete:
+       - HKEY_LOCAL_MACHINE\SOFTWARE\Spyrix
+       - HKEY_CURRENT_USER\Software\Spyrix
+  manual_steps_macos: |
+    1. Terminate skm processes: `killall -9 skm`
+    2. Unload LaunchDaemon: `sudo launchctl bootout system /Library/LaunchDaemons/com.spyrix.skm.plist`
+    3. Delete files: `/Library/Application Support/skm/` and `/Applications/Spyrix.app`
+    4. Revoke TCC permissions: `tccutil reset Accessibility com.spyrix.skm`
+
+references:
+  - "https://stopstalkerware.org/"
+  - "https://attack.mitre.org/techniques/T1056/001/"

@@ -1,0 +1,33 @@
+id: "EDR-ALL-0005"
+name: "SentinelOne Singularity Agent"
+version: 1
+category: "OrganizationManaged"
+severity: "Info"
+base_confidence: 0.98
+removal_policy: "DoNotRemove"
+platforms:
+  - "windows"
+  - "macos"
+  - "linux"
+vendor: "SentinelOne Inc."
+description: "Autonomous enterprise endpoint protection and response agent."
+is_legitimate_use_likely: true
+safety_warning: "Organization-managed EDR. Removal requires an administrator passphrase."
+
+detection:
+  processes:
+    - name: "SentinelAgent.exe"
+    - name: "SentinelService.exe"
+    - name: "SentinelUI.exe"
+    - name: "sentinelone-agent"
+  services:
+    - name: "SentinelAgent"
+  paths:
+    - "C:\\Program Files\\SentinelOne\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\SentinelOne"
+
+removal:
+  manual_steps_windows: |
+    Enterprise EDR protected by anti-tamper. Uninstallation requires SentinelOne console authorization.

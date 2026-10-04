@@ -1,0 +1,20 @@
+id: "LEG-WIN-0020"
+name: "Steam In-Game Overlay"
+version: 1
+category: "ScreenCapture"
+severity: "Info"
+base_confidence: 0.95
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "macos"
+  - "linux"
+vendor: "Valve Corporation"
+description: "Game overlay hooking graphics APIs to render in-game browser, friends list, and FPS counters."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "GameOverlayUI.exe"
+    - name: "steam.exe"
+    - name: "steamwebhelper.exe"

@@ -1,0 +1,19 @@
+id: "MDM-MAC-0005"
+name: "Mosyle Apple MDM Agent"
+version: 1
+category: "OrganizationManaged"
+severity: "Info"
+base_confidence: 0.95
+removal_policy: "DoNotRemove"
+platforms:
+  - "macos"
+vendor: "Mosyle Corporation"
+description: "Apple MDM and endpoint security platform for business and education."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "mosyle-agent"
+  paths:
+    - "/Applications/Mosyle Business.app"
+    - "/Library/Mosyle/"

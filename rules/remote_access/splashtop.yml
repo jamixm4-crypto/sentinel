@@ -1,0 +1,29 @@
+id: "RAT-WIN-0025"
+name: "Splashtop Remote Desktop Streamer"
+version: 1
+category: "RemoteAccess"
+severity: "Medium"
+base_confidence: 0.85
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "Splashtop Inc."
+description: "Remote desktop and remote support client."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "SRFeature.exe"
+    - name: "SRServer.exe"
+    - name: "SplashtopStreamer.exe"
+  services:
+    - name: "SplashtopRemoteService"
+  paths:
+    - "C:\\Program Files (x86)\\Splashtop\\Splashtop Remote\\Server\\"
+
+removal:
+  services_to_stop:
+    - "SplashtopRemoteService"
+  processes_to_kill:
+    - "SplashtopStreamer.exe"

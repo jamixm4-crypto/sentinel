@@ -1,0 +1,29 @@
+id: "RAT-WIN-0045"
+name: "Radmin Remote Administrator"
+version: 1
+category: "RemoteAccess"
+severity: "Medium"
+base_confidence: 0.85
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+vendor: "Famatech"
+description: "Remote PC access software with screen control, file transfer, and remote shutdown."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "Radmin.exe"
+    - name: "rserver3.exe"
+  services:
+    - name: "Radmin Server"
+    - name: "rserver3"
+  paths:
+    - "C:\\Program Files (x86)\\Radmin Viewer 3\\"
+    - "C:\\Windows\\System32\\rserver30\\"
+
+removal:
+  services_to_stop:
+    - "Radmin Server"
+  processes_to_kill:
+    - "rserver3.exe"

@@ -1,0 +1,29 @@
+id: "EDR-WIN-0020"
+name: "Microsoft Defender for Endpoint (Sense)"
+version: 1
+category: "OrganizationManaged"
+severity: "Info"
+base_confidence: 0.98
+removal_policy: "DoNotRemove"
+platforms:
+  - "windows"
+vendor: "Microsoft Corporation"
+description: "Enterprise endpoint detection and response component of Microsoft Defender ATP."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "Sense.exe"
+    - name: "SenseCncProxy.exe"
+    - name: "SenseIR.exe"
+  services:
+    - name: "Sense"
+  paths:
+    - "C:\\Program Files\\Windows Defender Advanced Threat Protection\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\Microsoft\\Windows Advanced Threat Protection"
+
+removal:
+  manual_steps_windows: |
+    Enterprise EDR component. Device must be offboarded via Microsoft Defender Security Center.

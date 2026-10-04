@@ -1,0 +1,38 @@
+id: "RAT-WIN-0010"
+name: "RustDesk Remote Desktop"
+version: 1
+category: "RemoteAccess"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "macos"
+  - "linux"
+vendor: "RustDesk"
+description: "Open source remote desktop software allowing full remote control and file transfer."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "rustdesk.exe"
+    - name: "RuntimeBroker_rustdesk.exe"
+  services:
+    - name: "rustdesk"
+    - name: "RustDesk Service"
+  paths:
+    - "C:\\Program Files\\RustDesk\\"
+  registry_keys:
+    - hive: "HKCU"
+      path: "Software\\RustDesk"
+    - hive: "HKLM"
+      path: "SOFTWARE\\RustDesk"
+
+removal:
+  services_to_stop:
+    - "rustdesk"
+  processes_to_kill:
+    - "rustdesk.exe"
+  manual_steps_windows: |
+    1. Terminate rustdesk.exe.
+    2. Uninstall via Windows Settings.

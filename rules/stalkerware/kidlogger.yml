@@ -1,0 +1,36 @@
+id: "STK-WIN-0030"
+name: "KidLogger Activity Monitor"
+version: 1
+category: "ProcessWatcher"
+severity: "Medium"
+base_confidence: 0.80
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "macos"
+  - "linux"
+vendor: "KidLogger.net"
+description: "Parental monitoring tool recording keystrokes, audio, screenshots, and active application usage."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "kidlogger.exe"
+    - name: "klsvc.exe"
+  services:
+    - name: "KidLogger Service"
+  paths:
+    - "C:\\Program Files (x86)\\KidLogger\\"
+    - "/Applications/KidLogger.app"
+
+removal:
+  services_to_stop:
+    - "KidLogger Service"
+  processes_to_kill:
+    - "kidlogger.exe"
+    - "klsvc.exe"
+  paths_to_remove:
+    - "C:\\Program Files (x86)\\KidLogger"
+  manual_steps_windows: |
+    1. Uninstall KidLogger from Settings -> Installed Apps.
+    2. Or stop service and delete C:\Program Files (x86)\KidLogger.

@@ -1,0 +1,32 @@
+id: "RAT-WIN-0015"
+name: "ConnectWise ScreenConnect Client"
+version: 1
+category: "RemoteAccess"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "macos"
+  - "linux"
+vendor: "ConnectWise"
+description: "Remote support and unattended access software. Commonly used by IT providers, but also deployed maliciously by adversaries."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "ScreenConnect.ClientService.exe"
+    - name: "ScreenConnect.WindowsClient.exe"
+  services:
+    - name: "ScreenConnect Client"
+  paths:
+    - "C:\\Program Files (x86)\\ScreenConnect Client\\"
+
+removal:
+  services_to_stop:
+    - "ScreenConnect Client"
+  processes_to_kill:
+    - "ScreenConnect.ClientService.exe"
+  manual_steps_windows: |
+    1. Stop the ScreenConnect Client service.
+    2. Uninstall via Windows Settings -> Apps.

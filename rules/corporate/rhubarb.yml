@@ -1,0 +1,24 @@
+id: "COR-ALL-0060"
+name: "Rhubarb Workplace Tracker"
+version: 1
+category: "ProcessWatcher"
+severity: "Medium"
+base_confidence: 0.85
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "Rhubarb"
+description: "Workplace presence and window monitoring tool."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "rhubarb.exe"
+    - name: "rhubarbd"
+  paths:
+    - "C:\\Program Files\\Rhubarb\\"
+
+removal:
+  processes_to_kill:
+    - "rhubarb.exe"

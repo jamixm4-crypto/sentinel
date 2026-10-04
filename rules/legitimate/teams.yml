@@ -1,0 +1,20 @@
+id: "LEG-ALL-0010"
+name: "Microsoft Teams"
+version: 1
+category: "ScreenCapture"
+severity: "Info"
+base_confidence: 0.95
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "macos"
+  - "linux"
+vendor: "Microsoft Corporation"
+description: "Workplace communication suite supporting audio, video, and screen sharing."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "ms-teams.exe"
+    - name: "Teams.exe"
+    - name: "teams"

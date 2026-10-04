@@ -1,0 +1,29 @@
+id: "COR-ALL-0055"
+name: "StaffCop Enterprise Agent"
+version: 1
+category: "OrganizationManaged"
+severity: "Info"
+base_confidence: 0.95
+removal_policy: "DoNotRemove"
+platforms:
+  - "windows"
+  - "linux"
+vendor: "AtomSecurity / StaffCop"
+description: "Enterprise DLP and employee tracking system recording keystrokes, screen recordings, network packets, and printed documents."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "staffcop.exe"
+    - name: "scagent.exe"
+    - name: "staffcop-agent"
+  services:
+    - name: "StaffCop"
+    - name: "scagent"
+  paths:
+    - "C:\\Program Files\\StaffCop\\"
+    - "/opt/staffcop/"
+
+removal:
+  manual_steps_windows: |
+    Enterprise DLP agent managed by organization security administrators.

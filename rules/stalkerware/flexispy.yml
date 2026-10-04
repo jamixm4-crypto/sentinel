@@ -1,0 +1,57 @@
+id: "STK-WIN-0015"
+name: "FlexiSPY Surveillance Suite"
+version: 1
+category: "KeyboardCapture"
+severity: "Critical"
+base_confidence: 0.90
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "FlexiSPY"
+description: "High-end surveillance software capable of stealth keylogging, VoIP call interception, and remote desktop access."
+is_legitimate_use_likely: false
+safety_warning: "FlexiSPY is disguised under benign system names. Neutralize watchdog services before removing files."
+
+detection:
+  processes:
+    - name: "systemcore.exe"
+    - name: "pm.exe"
+    - name: "fsagent.exe"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\FlexiSPY"
+  services:
+    - name: "System Core"
+    - name: "fsagent"
+  paths:
+    - "C:\\Program Files\\FlexiSPY\\"
+    - "C:\\ProgramData\\SystemCore\\"
+  network_domains:
+    - "flexispy.com"
+
+removal:
+  services_to_stop:
+    - "System Core"
+    - "fsagent"
+  services_to_delete:
+    - "System Core"
+    - "fsagent"
+  processes_to_kill:
+    - "systemcore.exe"
+    - "pm.exe"
+    - "fsagent.exe"
+  paths_to_remove:
+    - "C:\\Program Files\\FlexiSPY"
+    - "C:\\ProgramData\\SystemCore"
+  manual_steps_windows: |
+    1. Open cmd as admin.
+    2. Terminate processes: `taskkill /F /IM systemcore.exe /IM fsagent.exe`
+    3. Stop and delete services: `sc stop "System Core" && sc delete "System Core"`
+    4. Remove directory: `rmdir /S /Q "C:\ProgramData\SystemCore"`
+  manual_steps_macos: |
+    1. Unload daemons: `sudo launchctl bootout system /Library/LaunchDaemons/com.apple.syncservices.plist`
+    2. Delete `/usr/libexec/.system_core`
+
+references:
+  - "https://stopstalkerware.org/"

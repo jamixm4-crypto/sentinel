@@ -1,0 +1,35 @@
+id: "COR-WIN-0030"
+name: "Time Doctor Tracking Client"
+version: 1
+category: "ProcessWatcher"
+severity: "Medium"
+base_confidence: 0.85
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "macos"
+  - "linux"
+vendor: "Time Doctor LLC"
+description: "Work time tracker that captures periodic desktop screenshots, logs active tasks, and measures keyboard/mouse velocity."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "timedoctor.exe"
+    - name: "timedoctor2.exe"
+    - name: "tddesktop.exe"
+    - name: "sfproc"
+  services:
+    - name: "TimeDoctorService"
+  paths:
+    - "C:\\Program Files\\Time Doctor 2\\"
+    - "/Applications/Time Doctor 2.app"
+    - "/opt/timedoctor2/"
+
+removal:
+  processes_to_kill:
+    - "timedoctor2.exe"
+    - "sfproc"
+  manual_steps_windows: |
+    1. Close Time Doctor from system tray.
+    2. Uninstall via Windows Settings -> Installed Apps.

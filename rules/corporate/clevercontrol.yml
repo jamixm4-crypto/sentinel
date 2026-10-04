@@ -1,0 +1,34 @@
+id: "COR-ALL-0050"
+name: "CleverControl Remote Monitoring"
+version: 1
+category: "KeyboardCapture"
+severity: "High"
+base_confidence: 0.85
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "CleverControl"
+description: "Cloud-based employee monitoring software capturing continuous screenshots, live webcam feeds, and keystrokes."
+is_legitimate_use_likely: false
+
+detection:
+  processes:
+    - name: "ccagent.exe"
+    - name: "clevercontrol.exe"
+  services:
+    - name: "CleverControl Service"
+  paths:
+    - "C:\\Program Files\\CleverControl\\"
+    - "C:\\ProgramData\\CleverControl\\"
+
+removal:
+  services_to_stop:
+    - "CleverControl Service"
+  services_to_delete:
+    - "CleverControl Service"
+  processes_to_kill:
+    - "ccagent.exe"
+  paths_to_remove:
+    - "C:\\Program Files\\CleverControl"
+    - "C:\\ProgramData\\CleverControl"

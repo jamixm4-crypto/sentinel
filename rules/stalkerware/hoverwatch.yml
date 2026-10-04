@@ -1,0 +1,39 @@
+id: "STK-WIN-0038"
+name: "Hoverwatch Tracker"
+version: 1
+category: "KeyboardCapture"
+severity: "High"
+base_confidence: 0.85
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "Refog / Hoverwatch"
+description: "Invisible surveillance tool for tracking keystrokes, webcam, and internet activity."
+is_legitimate_use_likely: false
+
+detection:
+  processes:
+    - name: "hw.exe"
+    - name: "wpn.exe"
+    - name: "wservices.exe"
+  services:
+    - name: "Hoverwatch Service"
+  paths:
+    - "C:\\ProgramData\\Hoverwatch\\"
+    - "C:\\Program Files (x86)\\Hoverwatch\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\Hoverwatch"
+
+removal:
+  services_to_stop:
+    - "Hoverwatch Service"
+  services_to_delete:
+    - "Hoverwatch Service"
+  processes_to_kill:
+    - "hw.exe"
+    - "wpn.exe"
+  paths_to_remove:
+    - "C:\\ProgramData\\Hoverwatch"
+    - "C:\\Program Files (x86)\\Hoverwatch"

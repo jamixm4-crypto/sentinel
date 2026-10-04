@@ -1,0 +1,21 @@
+id: "LEG-ALL-0015"
+name: "Discord"
+version: 1
+category: "ScreenCapture"
+severity: "Info"
+base_confidence: 0.95
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "macos"
+  - "linux"
+vendor: "Discord Inc."
+description: "Voice and text chat app with screen sharing and game overlay capabilities."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "Discord.exe"
+    - name: "Discord"
+    - name: "DiscordPTB.exe"
+    - name: "DiscordCanary.exe"

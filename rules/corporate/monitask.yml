@@ -1,0 +1,28 @@
+id: "COR-ALL-0040"
+name: "Monitask Employee Monitoring"
+version: 1
+category: "ProcessWatcher"
+severity: "Medium"
+base_confidence: 0.85
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "macos"
+  - "linux"
+vendor: "Monitask"
+description: "Employee time tracker with automated screenshot capture, active window monitoring, and keyboard activity levels."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "Monitask.exe"
+    - name: "monitask"
+  paths:
+    - "C:\\Program Files\\Monitask\\"
+    - "/Applications/Monitask.app"
+
+removal:
+  processes_to_kill:
+    - "Monitask.exe"
+  manual_steps_windows: |
+    Exit Monitask from taskbar and uninstall via Settings -> Installed Apps.

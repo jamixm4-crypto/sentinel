@@ -1,0 +1,37 @@
+id: "COR-WIN-0025"
+name: "Kickidler Employee Monitoring"
+version: 1
+category: "ScreenCapture"
+severity: "Medium"
+base_confidence: 0.85
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "linux"
+vendor: "TeleLinkSoft"
+description: "Real-time employee screen monitoring, video recording, and keystroke logging system."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "grabber.exe"
+    - name: "termagent.exe"
+    - name: "kickidler"
+  services:
+    - name: "ngs"
+  paths:
+    - "C:\\Program Files\\TeleLinkSoftHelper\\"
+    - "C:\\ProgramData\\TeleLinkSoft\\"
+    - "/opt/kickidler/"
+  network_ports:
+    - 7906
+
+removal:
+  services_to_stop:
+    - "ngs"
+  processes_to_kill:
+    - "grabber.exe"
+    - "termagent.exe"
+  manual_steps_windows: |
+    1. Stop service 'ngs' via `sc stop ngs`.
+    2. Uninstall via Add/Remove programs if permitted.

@@ -1,0 +1,127 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SentinelRule",
+  "description": "Schema for Sentinel surveillance software detection rules",
+  "type": "object",
+  "required": ["id", "name", "version", "category", "severity", "removal_policy", "description", "detection"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}-[A-Z]{3,4}-[0-9]{4}$"
+    },
+    "name": {
+      "type": "string"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "KeyboardCapture",
+        "ScreenCapture",
+        "RemoteAccess",
+        "OrganizationManaged",
+        "SuspiciousPersistence",
+        "NetworkActivity",
+        "ProcessWatcher"
+      ]
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["Info", "Low", "Medium", "High", "Critical"]
+    },
+    "removal_policy": {
+      "type": "string",
+      "enum": ["SafeAuto", "ManualReview", "DoNotRemove"]
+    },
+    "platforms": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["windows", "linux", "macos"]
+      }
+    },
+    "vendor": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "is_legitimate_use_likely": {
+      "type": "boolean"
+    },
+    "safety_warning": {
+      "type": "string"
+    },
+    "detection": {
+      "type": "object",
+      "properties": {
+        "processes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "cmdline_regex": { "type": "string" }
+            }
+          }
+        },
+        "registry_keys": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["hive", "path"],
+            "properties": {
+              "hive": { "type": "string" },
+              "path": { "type": "string" },
+              "value_name": { "type": "string" },
+              "value_data": { "type": "string" }
+            }
+          }
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" }
+            }
+          }
+        },
+        "paths": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "network_domains": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "network_ports": {
+          "type": "array",
+          "items": { "type": "integer" }
+        }
+      }
+    },
+    "removal": {
+      "type": "object",
+      "properties": {
+        "uninstall_key": { "type": "string" },
+        "services_to_stop": { "type": "array", "items": { "type": "string" } },
+        "services_to_delete": { "type": "array", "items": { "type": "string" } },
+        "processes_to_kill": { "type": "array", "items": { "type": "string" } },
+        "paths_to_remove": { "type": "array", "items": { "type": "string" } },
+        "manual_steps_windows": { "type": "string" },
+        "manual_steps_linux": { "type": "string" },
+        "manual_steps_macos": { "type": "string" }
+      }
+    },
+    "references": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

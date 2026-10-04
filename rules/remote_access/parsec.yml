@@ -1,0 +1,21 @@
+id: "RAT-ALL-0040"
+name: "Parsec Low-Latency Remote Desktop"
+version: 1
+category: "RemoteAccess"
+severity: "Info"
+base_confidence: 0.90
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "Unity Technologies / Parsec"
+description: "Ultra-low-latency remote desktop software designed for gaming and remote creative work."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "parsecd.exe"
+    - name: "parsec.exe"
+  paths:
+    - "C:\\Program Files\\Parsec\\"
+    - "%AppData%\\Parsec\\"

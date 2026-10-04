@@ -1,0 +1,30 @@
+id: "STK-WIN-0055"
+name: "TheTruthSpy Stalkerware"
+version: 1
+category: "KeyboardCapture"
+severity: "Critical"
+base_confidence: 0.90
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "TheTruthSpy"
+description: "Disguised spyware utility logging user activities, chats, and screenshots."
+is_legitimate_use_likely: false
+
+detection:
+  processes:
+    - name: "dservice.exe"
+    - name: "ttspy.exe"
+  services:
+    - name: "DeviceService"
+  paths:
+    - "C:\\ProgramData\\TheTruthSpy\\"
+  network_domains:
+    - "thetruthspy.com"
+
+removal:
+  processes_to_kill:
+    - "dservice.exe"
+    - "ttspy.exe"
+  paths_to_remove:
+    - "C:\\ProgramData\\TheTruthSpy"

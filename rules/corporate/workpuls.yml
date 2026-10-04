@@ -1,0 +1,29 @@
+id: "COR-ALL-0045"
+name: "Insightful (formerly Workpuls) Monitoring"
+version: 1
+category: "ProcessWatcher"
+severity: "Medium"
+base_confidence: 0.85
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "Insightful / Workpuls"
+description: "Workplace activity tracker recording active software, screenshots, and idle time."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "workpuls.exe"
+    - name: "insightful.exe"
+  services:
+    - name: "WorkpulsService"
+    - name: "InsightfulService"
+  paths:
+    - "C:\\Program Files\\Workpuls\\"
+    - "C:\\Program Files\\Insightful\\"
+
+removal:
+  processes_to_kill:
+    - "workpuls.exe"
+    - "insightful.exe"

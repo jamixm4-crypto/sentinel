@@ -1,0 +1,28 @@
+id: "MDM-WIN-0010"
+name: "Microsoft Intune Management Extension"
+version: 1
+category: "OrganizationManaged"
+severity: "Info"
+base_confidence: 0.95
+removal_policy: "DoNotRemove"
+platforms:
+  - "windows"
+vendor: "Microsoft Corporation"
+description: "Mobile Device Management (MDM) client used by organizations to manage and configure enterprise PCs."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "IntuneManagementExtension.exe"
+    - name: "AgentExecutor.exe"
+  services:
+    - name: "IntuneManagementExtension"
+  paths:
+    - "C:\\Program Files (x86)\\Microsoft Intune Management Extension\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\Microsoft\\IntuneManagementExtension"
+
+removal:
+  manual_steps_windows: |
+    MDM management agent. Device must be unenrolled by company Azure AD / Intune administrator.

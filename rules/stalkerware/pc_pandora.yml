@@ -1,0 +1,27 @@
+id: "STK-WIN-0090"
+name: "PC Pandora Computer Monitoring"
+version: 1
+category: "KeyboardCapture"
+severity: "High"
+base_confidence: 0.85
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "Pandora Corp"
+description: "Hidden computer activity recorder and keystroke logger."
+is_legitimate_use_likely: false
+
+detection:
+  processes:
+    - name: "pcpandora.exe"
+    - name: "pandorasvc.exe"
+  services:
+    - name: "PandoraService"
+  paths:
+    - "C:\\Program Files\\PC Pandora\\"
+
+removal:
+  processes_to_kill:
+    - "pcpandora.exe"
+  paths_to_remove:
+    - "C:\\Program Files\\PC Pandora"

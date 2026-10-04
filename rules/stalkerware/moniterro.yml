@@ -1,0 +1,26 @@
+id: "STK-ALL-0085"
+name: "Moniterro Phone & PC Tracker"
+version: 1
+category: "SuspiciousPersistence"
+severity: "Critical"
+base_confidence: 0.90
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "Moniterro"
+description: "Covert device monitoring software."
+is_legitimate_use_likely: false
+
+detection:
+  processes:
+    - name: "moniterro.exe"
+    - name: "mtsync.exe"
+  paths:
+    - "C:\\ProgramData\\Moniterro\\"
+
+removal:
+  processes_to_kill:
+    - "moniterro.exe"
+  paths_to_remove:
+    - "C:\\ProgramData\\Moniterro"

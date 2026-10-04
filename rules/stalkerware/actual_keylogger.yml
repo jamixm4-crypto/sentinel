@@ -1,0 +1,36 @@
+id: "STK-WIN-0025"
+name: "Actual Keylogger"
+version: 1
+category: "KeyboardCapture"
+severity: "High"
+base_confidence: 0.85
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "SofiSafe"
+description: "Keylogger recording all keystrokes, clipboard changes, and screenshot activity in stealth mode."
+is_legitimate_use_likely: false
+
+detection:
+  processes:
+    - name: "ak.exe"
+    - name: "aklog.exe"
+    - name: "actkey.exe"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\Actual Keylogger"
+    - hive: "HKLM"
+      path: "SOFTWARE\\WOW6432Node\\Actual Keylogger"
+  paths:
+    - "C:\\Program Files (x86)\\Actual Keylogger\\"
+
+removal:
+  processes_to_kill:
+    - "ak.exe"
+    - "aklog.exe"
+  paths_to_remove:
+    - "C:\\Program Files (x86)\\Actual Keylogger"
+  manual_steps_windows: |
+    1. Terminate ak.exe via Task Manager.
+    2. Delete folder C:\Program Files (x86)\Actual Keylogger.
+    3. Remove registry key HKLM\SOFTWARE\Actual Keylogger.

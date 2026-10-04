@@ -1,0 +1,33 @@
+id: "COR-WIN-0015"
+name: "Veriato (SpectorSoft) User Activity Monitor"
+version: 1
+category: "OrganizationManaged"
+severity: "Info"
+base_confidence: 0.90
+removal_policy: "DoNotRemove"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "Veriato / Awareness Technologies"
+description: "Enterprise employee surveillance tool capturing detailed keystrokes, screen recordings, emails, and file movements."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "winv.exe"
+    - name: "recorder.exe"
+    - name: "cvt.exe"
+    - name: "clt.exe"
+  services:
+    - name: "Veriato Recorder Service"
+    - name: "SpectorRecorder"
+  paths:
+    - "C:\\Program Files\\Veriato\\"
+    - "C:\\Windows\\System32\\spector\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\Veriato"
+
+removal:
+  manual_steps_windows: |
+    Enterprise software installed by your employer. Contact your IT administrator.

@@ -1,0 +1,46 @@
+id: "COR-WIN-0001"
+name: "Teramind Employee Monitoring Agent"
+version: 1
+category: "OrganizationManaged"
+severity: "Info"
+base_confidence: 0.95
+removal_policy: "DoNotRemove"
+platforms:
+  - "windows"
+  - "macos"
+  - "linux"
+vendor: "Teramind Inc."
+description: "Enterprise endpoint monitoring solution tracking user activity, keystrokes, application usage, and screen recordings."
+is_legitimate_use_likely: true
+safety_warning: "This computer appears to have an organization-managed employee monitoring agent. Do NOT attempt to remove this software on employer-owned equipment, as doing so may violate company policies or employment agreements."
+
+detection:
+  processes:
+    - name: "tmagent.exe"
+    - name: "tmhost.exe"
+    - name: "svc.exe"
+    - name: "teramind-agent"
+  services:
+    - name: "tsvchst"
+    - name: "tmagentsvc"
+    - name: "tmcom"
+    - name: "tmagent"
+  paths:
+    - "C:\\ProgramData\\Teramind Agent\\"
+    - "/usr/local/teramind/"
+    - "/Applications/.NetApp.app"
+  network_domains:
+    - "teramind.co"
+
+removal:
+  manual_steps_windows: |
+    Teramind is an enterprise monitoring tool deployed by network administrators.
+    Removal requires administrative credentials from your organization's IT department.
+    Attempting unauthorized removal may flag a security alert in your company's SOC/IT console.
+  manual_steps_macos: |
+    Managed by organizational profile. Contact your system administrator to unenroll.
+  manual_steps_linux: |
+    Managed by systemd unit tmagent.service. Contact your organization's IT department.
+
+references:
+  - "https://www.teramind.co/"

@@ -1,0 +1,23 @@
+id: "RAT-ALL-0050"
+name: "Chrome Remote Desktop Host"
+version: 1
+category: "RemoteAccess"
+severity: "Info"
+base_confidence: 0.95
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "macos"
+  - "linux"
+vendor: "Google LLC"
+description: "Browser-based remote desktop service allowing authenticated remote access to the host PC."
+is_legitimate_use_likely: true
+
+detection:
+  processes:
+    - name: "remoting_host.exe"
+    - name: "chrome-remote-desktop"
+  services:
+    - name: "chromoting"
+  paths:
+    - "C:\\Program Files (x86)\\Google\\Chrome Remote Desktop\\"
