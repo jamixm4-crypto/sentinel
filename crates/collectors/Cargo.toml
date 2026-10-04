@@ -1,0 +1,19 @@
+[package]
+name = "sentinel-collectors"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+sentinel-core = { workspace = true }
+sysinfo = { workspace = true }
+walkdir = { workspace = true }
+regex = { workspace = true }
+tracing = { workspace = true }
+thiserror = { workspace = true }
+dirs = { workspace = true }
+
+[target.'cfg(windows)'.dependencies]
+# Windows-specific dependencies
+winreg = "0.52"
