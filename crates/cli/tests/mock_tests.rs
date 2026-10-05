@@ -1,5 +1,5 @@
 use sentinel_core::{
-    Category, Evidence, EvidenceData, EvidenceType, Finding, Lang, PlatformInfo, PrivilegeLevel,
+    Category, Evidence, EvidenceData, EvidenceType, Lang,
     RemovalPolicy, Severity, Verdict,
 };
 use sentinel_rules::get_embedded_rules;
@@ -183,3 +183,130 @@ fn test_c2_network_beacon_alert() {
     assert!(findings.len() >= 1);
     assert!(findings.iter().any(|f| f.rule_id == "stalkerware_c2_network_beacon"));
 }
+
+#[test]
+fn test_masquerading_system_process_detection() {
+    let rules = get_embedded_rules();
+    let scoring = ScoringEngine::new(&rules, Lang::En);
+
+    // Malicious stealth keylogger disguising as svchost.exe in AppData
+    let fake_svchost = vec![
+        Evidence::new(
+            EvidenceType::ActiveProcess,
+            "ProcessCollector",
+            "Active process: svchost.exe (PID: 666)",
+            "Path: C:\\Users\\Victim\\AppData\\Roaming\\svchost.exe",
+        )
+        .with_data(EvidenceData::Process {
+            pid: 666,
+            name: "svchost.exe".to_string(),
+            exe_path: Some("C:\\Users\\Victim\\AppData\\Roaming\\svchost.exe".to_string()),
+            command_line: Some("C:\\Users\\Victim\\AppData\\Roaming\\svchost.exe --stealth".to_string()),
+        }),
+    ];
+
+    let (verdict, findings) = scoring.evaluate(&fake_svchost);
+    assert_eq!(verdict, Verdict::SurveillanceLikely, "Masquerading system process must trigger SurveillanceLikely");
+    assert_eq!(findings.len(), 1);
+    assert_eq!(findings[0].rule_id, "t1036_process_masquerading");
+    assert_eq!(findings[0].severity, Severity::Critical);
+    assert_eq!(findings[0].confidence.score, 0.95);
+    assert!(!findings[0].is_legitimate_likely);
+}
+
+#[test]
+fn test_benign_app_allowlist_suppression() {
+    let rules = get_embedded_rules();
+    let scoring = ScoringEngine::new(&rules, Lang::En);
+
+    // Common benign tools: OBS Studio and NVDA screen reader
+    let benign_tools = vec![
+        Evidence::new(
+            EvidenceType::ActiveProcess,
+            "ProcessCollector",
+            "Active process: obs64.exe (PID: 1200)",
+            "Path: C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe",
+        )
+        .with_data(EvidenceData::Process {
+            pid: 1200,
+            name: "obs64.exe".to_string(),
+            exe_path: Some("C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe".to_string()),
+            command_line: None,
+        }),
+        Evidence::new(
+            EvidenceType::ActiveProcess,
+            "ProcessCollector",
+            "Active process: nvda.exe (PID: 1300)",
+            "Path: C:\\Program Files (x86)\\NVDA\\nvda.exe",
+        )
+        .with_data(EvidenceData::Process {
+            pid: 1300,
+            name: "nvda.exe".to_string(),
+            exe_path: Some("C:\\Program Files (x86)\\NVDA\\nvda.exe".to_string()),
+            command_line: None,
+        }),
+    ];
+
+    let (verdict, findings) = scoring.evaluate(&benign_tools);
+    assert_eq!(verdict, Verdict::Clean, "Benign tools like OBS and NVDA must yield Clean verdict");
+    assert!(findings.is_empty(), "Benign tools must not produce false positive findings");
+}
+
+#[test]
+fn test_cmdline_regex_matching_accuracy() {
+    use sentinel_rules::matcher::RuleMatcher;
+    use sentinel_rules::schema::{DetectionCriteria, ProcessCriteria, Rule};
+
+    let rule = Rule {
+        id: "test_regex_rule".to_string(),
+        name: "Test Regex Rule".to_string(),
+        version: 1,
+        category: Category::SuspiciousPersistence,
+        severity: Severity::High,
+        base_confidence: 0.8,
+        removal_policy: RemovalPolicy::SafeAuto,
+        platforms: vec!["windows".to_string()],
+        vendor: None,
+        description: "Test".to_string(),
+        is_legitimate_use_likely: false,
+        safety_warning: None,
+        detection: DetectionCriteria {
+            processes: vec![ProcessCriteria {
+                name: "agent.exe".to_string(),
+                cmdline_regex: Some(r".*--hidden.*".to_string()),
+            }],
+            ..Default::default()
+        },
+        condition: None,
+        removal: None,
+        references: vec![],
+    };
+
+    let rules = vec![rule];
+    let matcher = RuleMatcher::new(&rules);
+
+    // 1. Process without matching regex cmdline
+    let non_matching_ev = vec![
+        Evidence::new(EvidenceType::ActiveProcess, "col", "desc", "tech").with_data(EvidenceData::Process {
+            pid: 10,
+            name: "agent.exe".to_string(),
+            exe_path: None,
+            command_line: Some("agent.exe --normal-mode".to_string()),
+        })
+    ];
+    let matches = matcher.match_evidence(&non_matching_ev);
+    assert!(matches.is_empty(), "Cmdline without regex match must not match");
+
+    // 2. Process with matching regex cmdline
+    let matching_ev = vec![
+        Evidence::new(EvidenceType::ActiveProcess, "col", "desc", "tech").with_data(EvidenceData::Process {
+            pid: 11,
+            name: "agent.exe".to_string(),
+            exe_path: None,
+            command_line: Some("agent.exe --hidden --port 4444".to_string()),
+        })
+    ];
+    let matches2 = matcher.match_evidence(&matching_ev);
+    assert_eq!(matches2.len(), 1, "Cmdline with regex match must match");
+}
+

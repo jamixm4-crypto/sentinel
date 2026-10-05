@@ -4,7 +4,7 @@ use sentinel_core::{
 use sentinel_rules::matcher::RuleMatcher;
 use sentinel_rules::schema::Rule;
 
-use crate::allowlist::is_system_allowlisted_process;
+use crate::allowlist::{is_known_benign_app, is_masquerading_system_process, is_system_allowlisted_process};
 use crate::explanation::generate_explanation;
 
 pub struct ScoringEngine<'a> {
@@ -26,14 +26,92 @@ impl<'a> ScoringEngine<'a> {
         let mut has_high_severity = false;
         let mut has_medium_severity = false;
 
+        // 1. Process Masquerading / Impersonation Analysis (MITRE ATT&CK T1036.005)
+        for ev in all_evidence {
+            if let Some(sentinel_core::EvidenceData::Process { pid, name, exe_path, .. }) = &ev.data {
+                if is_masquerading_system_process(name, exe_path.as_deref()) {
+                    has_high_severity = true;
+                    let path_str = exe_path.as_deref().unwrap_or("Unknown location");
+                    let what_is_it = match self.lang {
+                        Lang::Ru => format!("Маскировка под системный процесс Windows ({})", name),
+                        Lang::En => format!("System Process Impersonation ({})", name),
+                    };
+                    let why_flagged = match self.lang {
+                        Lang::Ru => format!(
+                            "Процесс с именем системного компонента '{}' запущен из каталога '{}'. Настоящие системные процессы Windows никогда не исполняются из пользовательских или временных директорий (техника скрытия MITRE T1036.005).",
+                            name, path_str
+                        ),
+                        Lang::En => format!(
+                            "Process mimicking system binary '{}' was launched from '{}'. Genuine Windows system processes never execute from user profiles or temp directories (MITRE ATT&CK T1036.005).",
+                            name, path_str
+                        ),
+                    };
+                    let is_legitimate = match self.lang {
+                        Lang::Ru => "Крайне маловероятно. Это явная попытка выдать следящее или вредоносное ПО за доверенную службу Windows.".to_string(),
+                        Lang::En => "Highly unlikely. This is a known technique to evade detection by posing as a trusted Windows service.".to_string(),
+                    };
+                    let recommendation = match self.lang {
+                        Lang::Ru => "Немедленно завершите процесс, изолируйте файл в карантин и проверьте планировщик задач и реестр.".to_string(),
+                        Lang::En => "Immediately terminate the process, quarantine the binary file, and inspect persistence entries.".to_string(),
+                    };
+
+                    let mut steps = vec![
+                        RemovalStep {
+                            order: 1,
+                            description: format!("Terminate suspicious impersonating process '{}' (PID {})", name, pid),
+                            action: RemovalAction::TerminateProcess { name: name.clone() },
+                            rollback_action: None,
+                        }
+                    ];
+                    if let Some(p) = exe_path {
+                        steps.push(RemovalStep {
+                            order: 2,
+                            description: format!("Quarantine binary file '{}'", p),
+                            action: RemovalAction::QuarantineFile { source_path: p.clone() },
+                            rollback_action: None,
+                        });
+                    }
+
+                    findings.push(Finding {
+                        id: format!("MASQ-{}", pid),
+                        rule_id: "t1036_process_masquerading".to_string(),
+                        name: format!("Masquerading Process ({})", name),
+                        vendor: Some("MITRE ATT&CK T1036.005".to_string()),
+                        category: sentinel_core::Category::SuspiciousPersistence,
+                        severity: Severity::Critical,
+                        confidence: Confidence::new(0.95),
+                        is_legitimate_likely: false,
+                        removal_policy: sentinel_core::RemovalPolicy::SafeAuto,
+                        evidence: vec![ev.clone()],
+                        explanation: sentinel_core::FindingExplanation {
+                            what_is_it,
+                            why_flagged,
+                            is_legitimate,
+                            recommendation,
+                        },
+                        removal_steps: RemovalSteps {
+                            steps,
+                            manual_guide_windows: Some(format!("Inspect folder '{}' and terminate process '{}' via Task Manager", path_str, name)),
+                            manual_guide_linux: None,
+                            manual_guide_macos: None,
+                        },
+                        references: vec![
+                            "https://attack.mitre.org/techniques/T1036/005/".to_string(),
+                        ],
+                    });
+                }
+            }
+        }
+
+        // 2. Rule evaluation with multi-modal confidence boost
         for (idx, rmatch) in matches.into_iter().enumerate() {
             let rule = &rmatch.rule;
 
-            // Check if all matched processes are system allowlisted
+            // Check if all matched processes are system allowlisted or known benign apps
             let mut all_allowlisted = true;
             for ev in &rmatch.matched_evidence {
-                if let Some(sentinel_core::EvidenceData::Process { name, .. }) = &ev.data {
-                    if !is_system_allowlisted_process(name) {
+                if let Some(sentinel_core::EvidenceData::Process { name, exe_path, .. }) = &ev.data {
+                    if !is_system_allowlisted_process(name) && !is_known_benign_app(name, exe_path.as_deref()) {
                         all_allowlisted = false;
                         break;
                     }
@@ -44,11 +122,14 @@ impl<'a> ScoringEngine<'a> {
             }
 
             if all_allowlisted && rule.is_legitimate_use_likely {
-                continue; // Suppress false positives on standard OS binaries
+                continue; // Suppress false positives on standard OS binaries and benign software
             }
 
             let finding_id = format!("{}-{}", rule.id, idx + 1);
-            let confidence = Confidence::new(rmatch.score);
+            let unique_evidence_types: std::collections::HashSet<_> =
+                rmatch.matched_evidence.iter().map(|e| &e.evidence_type).collect();
+            let multimodal_boost = if unique_evidence_types.len() >= 2 { 0.15 } else { 0.0 };
+            let confidence = Confidence::new((rmatch.score + multimodal_boost).min(1.0));
             let explanation = generate_explanation(rule, self.lang);
             let removal_steps = self.build_removal_steps(rule);
 

@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 /// Type of technical evidence observed
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum EvidenceType {
     ActiveProcess,
     RegistryRunKey,

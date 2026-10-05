@@ -32,6 +32,15 @@ impl<'a> RuleMatcher<'a> {
             }
 
             if !matched.is_empty() {
+                // Enforce condition min_matches if specified
+                if let Some(cond) = &rule.condition {
+                    if let Some(min_req) = cond.min_matches {
+                        if matched.len() < min_req {
+                            continue;
+                        }
+                    }
+                }
+
                 // Calculate match score based on base confidence and evidence count
                 let evidence_boost = (matched.len() as f32 * 0.15).min(0.25);
                 let score = (rule.base_confidence + evidence_boost).min(1.0);
@@ -49,11 +58,29 @@ impl<'a> RuleMatcher<'a> {
 
     fn evidence_matches_rule(&self, ev: &Evidence, rule: &Rule) -> bool {
         match &ev.data {
-            Some(EvidenceData::Process { name, .. }) => {
+            Some(EvidenceData::Process { name, exe_path, command_line, .. }) => {
                 let name_lower = name.to_lowercase();
                 for proc in &rule.detection.processes {
                     if proc.name.to_lowercase() == name_lower {
+                        if let Some(regex_str) = &proc.cmdline_regex {
+                            if let Ok(re) = regex::Regex::new(regex_str) {
+                                let cmd = command_line.as_deref().unwrap_or("");
+                                if !re.is_match(cmd) {
+                                    continue;
+                                }
+                            }
+                        }
                         return true;
+                    }
+                }
+
+                // Correlate process executable path with rule paths
+                if let Some(path) = exe_path {
+                    let path_lower = path.to_lowercase();
+                    for p in &rule.detection.paths {
+                        if path_lower.contains(&p.to_lowercase()) {
+                            return true;
+                        }
                     }
                 }
             }

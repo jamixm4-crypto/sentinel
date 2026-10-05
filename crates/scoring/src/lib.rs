@@ -4,4 +4,5 @@ pub mod allowlist;
 pub mod engine;
 pub mod explanation;
 
+pub use allowlist::*;
 pub use engine::ScoringEngine;
