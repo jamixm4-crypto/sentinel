@@ -10,11 +10,22 @@ use crate::explanation::generate_explanation;
 pub struct ScoringEngine<'a> {
     rules: &'a [Rule],
     lang: Lang,
+    user_allowlist: std::collections::HashSet<String>,
 }
 
 impl<'a> ScoringEngine<'a> {
     pub fn new(rules: &'a [Rule], lang: Lang) -> Self {
-        Self { rules, lang }
+        Self {
+            rules,
+            lang,
+            user_allowlist: std::collections::HashSet::new(),
+        }
+    }
+
+    /// Attach a user-defined allowlist of rule IDs or binary names to suppress
+    pub fn with_allowlist(mut self, allowlist: std::collections::HashSet<String>) -> Self {
+        self.user_allowlist = allowlist.into_iter().map(|s| s.to_lowercase()).collect();
+        self
     }
 
     /// Process all raw evidence and correlate into findings
@@ -29,6 +40,11 @@ impl<'a> ScoringEngine<'a> {
         // 1. Process Masquerading / Impersonation Analysis (MITRE ATT&CK T1036.005)
         for ev in all_evidence {
             if let Some(sentinel_core::EvidenceData::Process { pid, name, exe_path, .. }) = &ev.data {
+                if self.user_allowlist.contains(&name.to_lowercase())
+                    || self.user_allowlist.contains("t1036_process_masquerading")
+                {
+                    continue;
+                }
                 if is_masquerading_system_process(name, exe_path.as_deref()) {
                     has_high_severity = true;
                     let path_str = exe_path.as_deref().unwrap_or("Unknown location");
@@ -107,6 +123,26 @@ impl<'a> ScoringEngine<'a> {
         for (idx, rmatch) in matches.into_iter().enumerate() {
             let rule = &rmatch.rule;
 
+            // Check if user allowlisted this rule or process
+            if self.user_allowlist.contains(&rule.id.to_lowercase())
+                || self.user_allowlist.contains(&rule.name.to_lowercase())
+            {
+                continue;
+            }
+
+            let mut user_suppressed = false;
+            for ev in &rmatch.matched_evidence {
+                if let Some(sentinel_core::EvidenceData::Process { name, .. }) = &ev.data {
+                    if self.user_allowlist.contains(&name.to_lowercase()) {
+                        user_suppressed = true;
+                        break;
+                    }
+                }
+            }
+            if user_suppressed {
+                continue;
+            }
+
             // Check if all matched processes are system allowlisted or known benign apps
             let mut all_allowlisted = true;
             for ev in &rmatch.matched_evidence {
@@ -170,6 +206,9 @@ impl<'a> ScoringEngine<'a> {
             };
 
             if let Some(c2) = matched_c2 {
+                if self.user_allowlist.contains(&c2.to_lowercase()) {
+                    continue;
+                }
                 if seen_c2.insert(c2) {
                     has_high_severity = true;
                     let what_is_it = match self.lang {

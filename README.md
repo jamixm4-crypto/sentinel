@@ -1,242 +1,216 @@
-# Sentinel
+# Sentinel — Defensive Spyware, Stalkerware & Surveillance Detector
+
+**English** | [📖 Читать на русском (Russian Version)](README_RU.md)
 
 [![CI](https://github.com/jamixm4-crypto/sentinel/actions/workflows/ci.yml/badge.svg)](https://github.com/jamixm4-crypto/sentinel/actions/workflows/ci.yml)
-[![Code License](https://img.shields.io/badge/Code-Apache--2.0-blue.svg)](LICENSE-APACHE)
+[![GitHub Release](https://img.shields.io/github/v/release/jamixm4-crypto/sentinel?color=green)](https://github.com/jamixm4-crypto/sentinel/releases)
+[![Code License](https://img.shields.io/badge/Code-Apache--2.0-blue.svg)](LICENSE)
 [![Rules License](https://img.shields.io/badge/Rules-CC--BY--4.0-orange.svg)](LICENSE-CC-BY)
+[![Zero Telemetry](https://img.shields.io/badge/Telemetry-Zero%20(100%25%20Offline)-brightgreen.svg)](#security-principles)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](#supported-platforms)
-[![Rust](https://img.shields.io/badge/Rust-1.75%2B%20stable-red.svg)](https://www.rust-lang.org)
+[![Rust](https://img.shields.io/badge/Rust-1.78%2B%20stable-red.svg)](https://www.rust-lang.org)
 
-Кроссплатформенный защитный сканер для обнаружения программ скрытого наблюдения: кейлоггеров, коммерческого stalkerware, скрытых утилит удалённого доступа (RAT), программ учёта рабочего времени, корпоративных EDR/MDM-агентов и сторожевых процессов (process watchers/anti-kill).
+**Sentinel** is an open-source, offline-first defensive security scanner designed to detect covert surveillance software: keyloggers, commercial stalkerware, remote access trojans (RATs), employee monitoring agents, corporate EDR/MDM sensors, and process watchdogs.
 
-По умолчанию работает **только на чтение** (read-only), без фоновых служб, без отправки телеметрии в сеть и без вмешательства в системные журналы.
-
----
-
-## Оглавление
-
-1. [Быстрый старт](#быстрый-старт)
-2. [Ключевые принципы](#ключевые-принципы)
-3. [Что именно ищет Sentinel](#что-именно-ищет-sentinel)
-4. [Политика и механизм удаления](#политика-и-механизм-удаления)
-5. [Режим личной безопасности (`--personal-safety-mode`)](#режим-личной-безопасности---personal-safety-mode)
-6. [Честные технические ограничения](#честные-технические-ограничения)
-7. [Команды CLI](#команды-cli)
-8. [Архитектура проекта](#архитектура-проекта)
-9. [Сборка из исходников](#сборка-из-исходников)
-10. [Лицензии](#лицензии)
+Operating strictly **read-only by default**, Sentinel requires **zero telemetry**, performs **no remote network calls**, and leaves minimal forensic trace on audited systems.
 
 ---
 
-## Быстрый старт
+## Verified Installation
 
-### Установка одной командой
+As a security application designed for users facing active threats, downloading verified binaries with cryptographic checksum validation is strongly recommended over direct shell pipes.
 
-**Windows (PowerShell от обычного пользователя или администратора):**
+### 1. Download Verified Release (Recommended)
+
+1. Download the archive for your operating system from [GitHub Releases](https://github.com/jamixm4-crypto/sentinel/releases/latest).
+2. Verify the SHA-256 checksum against the official `SHA256SUMS` file:
+
+```powershell
+# Windows (PowerShell)
+$hash = (Get-FileHash -Path sentinel-windows-x86_64.zip -Algorithm SHA256).Hash.ToLower()
+$expected = (Get-Content SHA256SUMS | Select-String "sentinel-windows-x86_64.zip").Line.Split(" ")[0].ToLower()
+if ($hash -eq $expected) { Write-Host "✔ Checksum Verified!" -ForegroundColor Green }
+```
+
+```bash
+# Linux / macOS
+sha256sum -c SHA256SUMS
+```
+
+3. Extract the archive and execute `sentinel scan`.
+
+### 2. Automated Installer Scripts (Convenience Option)
+
+**Windows (PowerShell):**
 ```powershell
 irm https://raw.githubusercontent.com/jamixm4-crypto/sentinel/main/install.ps1 | iex
 ```
 
-**Linux и macOS (Bash):**
+**Linux & macOS (Bash):**
 ```bash
 curl -fsSL https://raw.githubusercontent.com/jamixm4-crypto/sentinel/main/install.sh | bash
 ```
 
-### Запуск сканирования
+---
+
+## Quick Usage
 
 ```bash
-# Базовый аудит системы (на русском языке, без автооткрытия браузера):
-sentinel scan --lang ru --no-open
-
-# Стандартный скан с автоматическим открытием интерактивного HTML-отчёта:
+# 1. Standard scan (generates terminal summary + standalone offline HTML report):
 sentinel scan
-```
 
-После завершения сканирования Sentinel выведет краткую сводку в терминал и сохранит два файла:
-- `sentinel-report-<timestamp>.html` — автономный интерактивный отчёт со встроенными стилями и скриптами (работает без интернета, без внешних CDN).
-- `sentinel-report-<timestamp>.json` — полная структурированная выгрузка для интеграции в SIEM или ручного разбора.
-
----
-
-## Ключевые принципы
-
-- **Безопасность по умолчанию (Read-only)**. Обычный скан никогда не завершает процессы, не удаляет ключи реестра и не меняет конфигурацию системы.
-- **Ноль телеметрии**. Никаких запросов во внешние сервисы, трекеров, облачных проверок или сбора аналитики. Все 75 сигнатур, база 280+ C2 доменов и HTML-шаблоны встроены внутрь бинарного файла на этапе компиляции.
-- **Работа без прав администратора**. Скан корректно выполняется от обычного пользователя. Если требуются повышенные привилегии (например, для проверки драйверов клавиатурных фильтров в реестре или системных каталогов `/etc`), утилита явно сообщает, какие именно проверки были пропущены из-за нехватки прав.
-- **Минимальный форензик-след**. Sentinel не регистрирует себя в автозагрузке, не создаёт постоянных служб и не чистит за собой системные журналы (Event Log / syslog), так как очистка журналов — поведение вредоносных программ.
-
----
-
-## Что именно ищет Sentinel
-
-Сигнатурная база содержит **75 мультимодальных правил** и встроенный **C2 Threat Intelligence Matcher** (280+ верифицированных C2 хостов из базы AssoEchap и TinyCheck), покрывающих основные векторы наблюдения:
-
-| Категория | Примеры обнаруживаемого софта | Индикаторы |
-| :--- | :--- | :--- |
-| **Перехват клавиатуры (KeyboardCapture)** | Spyrix, Refog, Actual Keylogger, mSpy, FlexiSPY, iKeyMonitor, TheTruthSpy, Wolfeye, Cerberus, RemoteSpy, PC Pandora, SpyBubble, Spapp Monitoring, SentryPC, SpyTech SpyAgent, WebWatcher, Elite Keylogger, Micro Keylogger | Глобальные хуки, импорты Win32 API (`SetWindowsHookEx`, `RegisterRawInputDevices` с `RIDEV_INPUTSINK`), фильтр-драйверы `{4D36E96B...}` в `UpperFilters`, пути автозагрузки, скрытые службы |
-| **Захват экрана и медиа (ScreenCapture)** | pcTattletale, Kickidler, SoftActivity TS Monitor, NetVizor, CleverControl Cloud, несанкционированные трансляторы рабочего стола | Фоновые сессии CapabilityAccessManager ConsentStore (`webcam`, `microphone`, `graphicsCaptureProgrammatic`), видеопотоки PipeWire в Linux |
-| **Сетевая связь с C2 (NetworkActivity)** | Командные серверы FlexiSPY, mSpy, Hoverwatch, Snoopza, WebWatcher, Spylix, KidLogger, Spyic | Активные исходящие сокеты и записи системного DNS-кеша (`ipconfig /displaydns`), сопоставляемые с 280+ известными C2 доменами |
-| **Удалённый доступ (RemoteAccess)** | TeamViewer, AnyDesk, RustDesk, ScreenConnect, NetSupport Manager, Splashtop, VNC (RealVNC/UltraVNC/TightVNC), DWService, Parsec, Radmin, Chrome Remote Desktop, Ammyy Admin, LogMeIn / GoToMyPC | Слушающие TCP-порты (5900, 3389, 7070, 7906), службы неконтролируемого доступа, сохранённые конфигурации |
-| **Учёт рабочего времени (ProcessWatcher)** | Teramind, ActivTrak, Hubstaff, Time Doctor, DeskTime, Monitask, Insightful (Workpuls), CleverControl, Rhubarb | Трассировка активных окон, регулярные фоновые снимки экрана, отслеживание ptrace |
-| **Корпоративные EDR / MDM (OrganizationManaged)** | CrowdStrike Falcon, SentinelOne, Microsoft Intune, VMware Carbon Black, Jamf Pro, Mosyle, Kandji, Microsoft Defender for Endpoint, Qustodio, FamiSafe | Профили управления MDM, системные агенты EDR, службы защиты хоста |
-| **Легитимное ПО с функциями захвата (Info)** | OBS Studio, Zoom, Microsoft Teams, Discord, Steam Overlay, NVIDIA ShadowPlay, AutoHotkey, Менеджеры паролей (1Password, Bitwarden, KeePass) | Попадают в отчёт с пометкой `Info` и явным разъяснением назначения, чтобы исключить ложную тревогу |
-
----
-
-## Политика и механизм удаления
-
-В отличие от антивирусов, Sentinel не удаляет всё подряд без разбора. Каждой находке присваивается строгая категория `removal_policy`:
-
-1. `SafeAuto` — однозначно нежелательные шпионские программы и кейлоггеры с понятным способом деинсталляции. Доступны для быстрого карантина и удаления.
-2. `ManualReview` — ПО двойного назначения (AnyDesk, TeamViewer, трекеры времени, родительский контроль). Требует персонального подтверждения по каждой позиции, чтобы пользователь случайно не удалил нужную ему рабочую программу.
-3. `DoNotRemove` — корпоративные EDR и MDM-агенты, установленные работодателем. **Автоматическое удаление программно заблокировано**. Утилита объясняет, что это за софт, и рекомендует обратиться в корпоративный ИТ-отдел, предотвращая нарушение трудового договора или поломку рабочего ноутбука.
-
-### Обратимый карантин
-
-Вместо безвозвратного удаления рекомендуется использовать карантин:
-
-```bash
-# Поместить найденную программу в изолированную папку:
-sentinel quarantine STK-WIN-0042-1
-
-# Вернуть всё обратно из карантина в исходное состояние:
-sentinel restore STK-WIN-0042-1
-```
-
-При карантине:
-1. Завершаются активные процессы программы.
-2. Службы переводятся в режим `Disabled` (а не удаляются).
-3. Исполняемые файлы перемещаются в изолированный каталог `~/.sentinel/quarantine/<id>/`.
-4. Формируется манифест `quarantine-manifest.json` с хэшами SHA-256 и исходными путями для точного отката.
-
-### Полное удаление
-
-```bash
-# Удаление одной конкретной находки после показа затронутых файлов и подтверждения:
-sentinel remove STK-WIN-0042-1
-
-# Пакетное удаление всех подтверждённых вредоносных программ (только категории SafeAuto):
-sentinel remove --all-safe
-```
-
-Перед удалением сначала нейтрализуются сторожевые процессы (watchdogs), затем останавливаются службы и удаляются файлы. По окончании Sentinel автоматически проводит верификационный повторный скан.
-
----
-
-## Режим личной безопасности (`--personal-safety-mode`)
-
-> ⚠️ **Важно для ситуаций домашнего насилия и сталкинга**  
-> Если за вами следит партнёр или знакомый человек, внезапное удаление сталкерского софта приведёт к тому, что на телефон или панель преследователя придёт уведомление («Устройство отключено от сети»). Это может спровоцировать агрессию.
-
-Запуск в безопасном режиме:
-```bash
+# 2. Personal Safety Mode (in-memory terminal output only; no files saved to local disk):
 sentinel scan --personal-safety-mode
-```
 
-В этом режиме:
-- Команды пакетного автоматического удаления полностью блокируются.
-- В отчёте выводятся рекомендации по составлению плана безопасности и прямые контакты кризисных линий помощи:
-  - **Coalition Against Stalkerware**: [stopstalkerware.org](https://stopstalkerware.org/)
-  - **Международный справочник помощи**: [lila.help](https://lila.help/)
-  - **National Domestic Violence Hotline**: 1-800-799-7233 (SMS: START на 88788)
-- Пользователю рекомендуется искать помощь с другого, заведомо чистого устройства (телефон коллеги, рабочий ПК, библиотека).
+# 3. Forensic Mode (inspect an unmounted disk image or directory without live execution):
+sentinel scan --scan-path /mnt/target_image
+
+# 4. SIEM / Pipeline Mode (streams findings as single-line NDJSON to stdout):
+sentinel scan --format ndjson
+
+# 5. Interface language selection (Russian):
+sentinel scan --lang ru
+```
 
 ---
 
-## Честные технические ограничения
+## Architecture & Detection Engines
 
-Мы не даём ложных обещаний «стопроцентной защиты»:
+```
+                               ┌────────────────────────────────┐
+                               │       Sentinel Scanner         │
+                               └───────────────┬────────────────┘
+                                               │
+             ┌───────────────────┬─────────────┴───────┬───────────────────┐
+             ▼                   ▼                     ▼                   ▼
+     ┌──────────────┐    ┌──────────────┐      ┌──────────────┐    ┌──────────────┐
+     │  Processes & │    │ Persistence  │      │  Network C2  │    │ Masquerading │
+     │  Input Sinks │    │ Registry/ASEP│      │  Inspection  │    │ (T1036.005)  │
+     └───────┬──────┘    └───────┬──────┘      └───────┬──────┘    └───────┬──────┘
+             │                   │                     │                   │
+             └───────────────────┼─────────────────────┴───────────────────┘
+                                 ▼
+                     ┌───────────────────────┐
+                     │ Multi-Modal Correlator│
+                     │  (75+ Rules, 280+ C2) │
+                     └───────────┬───────────┘
+                                 │
+                 ┌───────────────┴───────────────┐
+                 ▼                               ▼
+       ┌───────────────────┐           ┌───────────────────┐
+       │   HTML/JSON/NDJSON│           │ Reversible Vault  │
+       │    Audit Report   │           │ (Dry-Run / Undo)  │
+       └───────────────────┘           └───────────────────┘
+```
 
-1. **Аппаратные кейлоггеры**. Никакой софт не может программно обнаружить физический USB-переходник между клавиатурой и системным блоком. Осмотрите кабель клавиатуры визуально.
-2. **Руткиты уровня ядра и прошивки (UEFI)**. Если скомпрометировано само ядро ОС (`ntoskrnl.exe`, модули ядра Linux), запросы из пользовательского пространства могут фальсифицироваться. При серьёзных подозрениях проводите аудит с доверенного загрузочного LiveUSB.
-3. **Корпоративные SIEM / EDR**. Sentinel — это защитный инструмент аудита, а не вирус. Он не применяет техники скрытия от системных администраторов компании (unhooking NTDLL, обход AMSI). Запуск утилиты будет виден службе безопасности вашей компании.
+- **Process Masquerading Detection (MITRE ATT&CK T1036.005)**:
+  Flags processes mimicking system components (`svchost.exe`, `csrss.exe`, `lsass.exe`, `services.exe`) running out of user profiles (`%APPDATA%`, `%TEMP%`, `C:\ProgramData`).
+- **75+ Embedded YAML Signatures & 280+ Stalkerware C2 Domains**:
+  Inspects active sockets and DNS client cache records (`ipconfig /displaydns`) against validated threat intelligence feeds (Coalition Against Stalkerware, AssoEchap, TinyCheck).
+- **Multi-Modal Rule Correlation**:
+  Requires corroborating evidence (`condition.min_matches: 2`) combining process execution, registry hooks, and network activity to eliminate single-point false alarms.
+- **Deep Benign Allowlist**:
+  Suppresses false positives for legitimate streaming software (OBS Studio), gaming overlays (Discord, Steam), accessibility tools (NVDA, Narrator), and developer IDEs.
 
 ---
 
-## Команды CLI
+## Interactive HTML Report Preview
 
-```text
-Использование: sentinel <КОМАНДА>
+When running `sentinel scan`, Sentinel generates a zero-dependency, single-file HTML report:
 
-Команды:
-  scan        Запустить аудит локальной системы
-  quarantine  Поместить найденный объект в обратимый карантин
-  restore     Восстановить объект из карантина
-  remove      Удалить найденную программу или все безопасные объекты
-  explain     Показать подробное описание правила и ручные инструкции
-  rules       Управление и проверка сигнатурных правил
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ 🛡️  SENTINEL AUDIT REPORT                     [Verdict: Review Recommended] │
+│ Target: Windows 11 x86_64 | 237 Inspected Processes | Scan Duration: 1.67s   │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ ┌──────────────────────┐  ┌──────────────────────┐  ┌──────────────────────┐ │
+│ │ 0 Critical Detected  │  │ 1 Medium (Dual-Use)  │  │ 236 Verified Clean   │ │
+│ └──────────────────────┘  └──────────────────────┘  └──────────────────────┘ │
+│                                                                              │
+│ ▼ [MEDIUM] VNC Server (UltraVNC / TightVNC / RealVNC)   Confidence: 100%     │
+│   Category: Remote Access & Control | Removal Policy: ManualReviewRequired   │
+│   • What is this: Virtual Network Computing server providing remote desktop  │
+│   • Why flagged: Process 'vncserver.exe' listening on TCP port 5900          │
+│   • Legitimate use: Very common in enterprise support and homelabs.          │
+│   • Remediation: Dry-run available via 'sentinel quarantine <id>'            │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Параметры `sentinel scan`
+---
 
-- `--lang <en|ru>` — язык отчёта и консольного вывода (по умолчанию: `en`).
-- `--out <DIR>` — путь к каталогу для сохранения отчётов (по умолчанию: текущая папка `.`).
-- `--no-open` — не открывать сгенерированный HTML-отчёт в браузере автоматически.
-- `--personal-safety-mode` — включить режим защиты жертв сталкинга (блокирует удаление, выводит контакты горячих линий).
-- `--json` — сохранить структурированный отчёт JSON.
+## Personal Safety Mode (`--personal-safety-mode`)
 
-### Примеры использования
+In intimate partner violence or domestic stalking scenarios, modifying or removing spyware can immediately alert the perpetrator via remote disconnection notifications, carrying severe risk of retaliatory confrontation:
+
+- **Zero Local Disk Artifacts**: No HTML or JSON reports are created on disk; findings are output exclusively to the terminal in memory.
+- **Browser Suppression**: The default web browser is not launched, leaving no browser history, cache, or tabs.
+- **Modifications Locked**: All `remove` and `quarantine` commands are **strictly blocked**.
+- **Support Resources**: The scan displays international hotlines and safety resources:
+  - [Coalition Against Stalkerware](https://stopstalkerware.org)
+  - Global Support Directory: [Lila.help](https://lila.help)
+  - US National Domestic Violence Hotline: `1-800-799-SAFE` (SMS: text "START" to 88788)
+
+---
+
+## Safe Remediation & Dry-Run by Default
+
+All modification operations execute in **dry-run mode by default**:
 
 ```bash
-# Скан системы с отчётом на русском языке в папку ./audit:
-sentinel scan --lang ru --out ./audit
+# 1. Preview quarantine actions without modifying files:
+sentinel quarantine <finding-id>
 
-# Посмотреть технические подробности правила STK-WIN-0042:
-sentinel explain STK-WIN-0042 --lang ru
+# 2. Execute quarantine into encrypted vault:
+sentinel quarantine <finding-id> --execute
 
-# Проверить список всех 60 встроенных правил:
-sentinel rules list
+# 3. Restore quarantined item to original state:
+sentinel restore <quarantine-id>
 
-# Проверить синтаксис собственного YAML-правила:
-sentinel rules validate ./my-rule.yml
+# 4. Preview automated removal for all SafeAuto findings:
+sentinel remove --all-safe
+
+# 5. Execute permanent removal:
+sentinel remove --all-safe --execute
 ```
 
 ---
 
-## Архитектура проекта
+## Custom User Allowlist
 
-```
-sentinel/
-├── Cargo.toml                    # Корневой workspace
-├── crates/
-│   ├── core/                     # Типы Finding, Evidence, RemovalPolicy, i18n
-│   ├── collectors/               # Сборщики артефактов (Windows, Linux, macOS)
-│   ├── rules/                    # Движок YAML-правил, парсер и 60 встроенных правил
-│   ├── scoring/                  # Нормализация уверенности, скоринг и allowlist
-│   ├── removal/                  # Карантин, манифесты отката и безопасное удаление
-│   ├── report/                   # Генератор HTML, JSON и консольного вывода
-│   └── cli/                      # Исполняемый файл sentinel (main.rs)
-├── rules/                        # База YAML-правил по категориям
-├── docs/                         # Техническая документация
-├── wiki/                         # Полная база знаний проекта (GitHub Wiki)
-└── tests/                        # Моки и интеграционные тесты
-```
-
----
-
-## Сборка из исходников
-
-### Требования
-- Компилятор Rust stable (1.75 или новее)
-- Windows (MSVC или MinGW), Linux (GCC/Clang) или macOS (Xcode CLI Tools)
+Manage your local allowlist to suppress expected administrative tools:
 
 ```bash
-# Клонировать репозиторий:
-git clone https://github.com/jamixm4-crypto/sentinel.git
-cd sentinel
-
-# Запуск тестов:
-cargo test --workspace
-
-# Сборка релизной оптимизированной версии:
-cargo build --release --bin sentinel
-
-# Готовый бинарник:
-./target/release/sentinel --version
+sentinel allow list
+sentinel allow add "my_admin_tool.exe"
+sentinel allow remove "my_admin_tool.exe"
 ```
 
 ---
 
-## Лицензии
+## Technical Limitations & Boundaries
 
-- **Программный код движка**: [Apache License 2.0](LICENSE-APACHE). Разрешено коммерческое и некоммерческое использование, модификация и интеграция с сохранением авторства.
-- **База сигнатур и правил (`rules/`)**: [Creative Commons Attribution 4.0 International (CC-BY-4.0)](LICENSE-CC-BY). Свободно для распространения и дополнения сообществом.
+1. **Mobile Devices (Android & iOS)**:
+   The majority of modern consumer stalkerware targets mobile smartphones. Sentinel is a desktop workstation scanner. Direct filesystem analysis of smartphones requires specialized physical tools like **Amnesty International's MVT (Mobile Verification Toolkit)** or **TinyCheck**. Sentinel includes mobile C2 indicators to audit local workstation network traffic for smartphone sync beacons.
+2. **Kernel Rootkits (Ring 0)**:
+   If an attacker has installed custom kernel drivers modifying dispatch tables, user-mode scans cannot guarantee complete visibility. If a rootkit is suspected, run Sentinel from an offline bootable live medium.
+3. **Hardware Keyloggers**:
+   Inline physical hardware keyloggers connected to keyboard cables or USB ports cannot be detected via operating system software APIs. Conduct physical hardware inspections.
+
+---
+
+## Documentation Links
+
+- [Threat Model & Security Scope](docs/threat-model.md)
+- [Architecture & Correlation Engine](docs/architecture.md)
+- [Reproducible Builds & Verification](docs/reproducible-builds.md)
+- [Removal Policy & Safety Tiers](docs/removal-policy.md)
+- [YAML Rule Specification](docs/rule-format.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Security Policy](SECURITY.md)
+
+---
+
+## License
+
+- **Source Code**: [Apache License 2.0](LICENSE)
+- **Detection Rules**: [Creative Commons Attribution 4.0 International](LICENSE-CC-BY)

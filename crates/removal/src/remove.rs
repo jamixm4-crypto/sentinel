@@ -21,6 +21,42 @@ impl RemovalManager {
         Self { personal_safety_mode }
     }
 
+    /// Dry run: simulate removal actions without modifying system state
+    pub fn dry_run(&self, finding: &Finding) -> Result<Vec<String>, RemovalError> {
+        if self.personal_safety_mode {
+            return Err(RemovalError::PersonalSafetyModeActive);
+        }
+
+        if finding.removal_policy == RemovalPolicy::DoNotRemove {
+            return Err(RemovalError::PolicyBlocked);
+        }
+
+        let mut planned_actions = Vec::new();
+        for step in &finding.removal_steps.steps {
+            match &step.action {
+                RemovalAction::TerminateProcess { name } => {
+                    planned_actions.push(format!("Would terminate process '{}'", name));
+                }
+                RemovalAction::StopService { name } => {
+                    planned_actions.push(format!("Would stop service '{}'", name));
+                }
+                RemovalAction::DeleteService { name } => {
+                    planned_actions.push(format!("Would delete service registration '{}'", name));
+                }
+                RemovalAction::QuarantineFile { source_path } => {
+                    planned_actions.push(format!("Would move '{}' to quarantine vault", source_path));
+                }
+                RemovalAction::DeleteRegistryValue { hive, path, value } => {
+                    planned_actions.push(format!("Would delete registry entry {}\\{}->{}", hive, path, value));
+                }
+                _ => {
+                    planned_actions.push(format!("Would execute action: {}", step.description));
+                }
+            }
+        }
+        Ok(planned_actions)
+    }
+
     pub fn remove_finding(&self, finding: &Finding) -> Result<Vec<String>, RemovalError> {
         if self.personal_safety_mode {
             return Err(RemovalError::PersonalSafetyModeActive);

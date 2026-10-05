@@ -126,7 +126,7 @@ fn test_do_not_remove_policy_blocking() {
     assert!(remove_result.is_err(), "Must reject removing DoNotRemove software");
 
     // Verify quarantine manager refuses to quarantine
-    let qm = sentinel_removal::QuarantineManager::new();
+    let qm = sentinel_removal::QuarantineManager::new(false);
     let quarantine_result = qm.quarantine(&findings[0]);
     assert!(quarantine_result.is_err(), "Must reject quarantining DoNotRemove software");
 }
@@ -156,6 +156,32 @@ fn test_personal_safety_mode_blocks_removal() {
     let rm = sentinel_removal::RemovalManager::new(true);
     let res = rm.remove_finding(&findings[0]);
     assert!(res.is_err(), "Personal Safety Mode must forbid removal");
+}
+
+#[test]
+fn test_personal_safety_mode_blocks_quarantine() {
+    let rules = get_embedded_rules();
+    let scoring = ScoringEngine::new(&rules, Lang::En);
+
+    let mspy_evidence = vec![Evidence::new(
+        EvidenceType::ActiveProcess,
+        "MockCollector",
+        "Active process: mspy.exe",
+        "Path: C:\\ProgramData\\mspy\\mspy.exe",
+    )
+    .with_data(EvidenceData::Process {
+        pid: 300,
+        name: "mspy.exe".to_string(),
+        exe_path: Some("C:\\ProgramData\\mspy\\mspy.exe".to_string()),
+        command_line: None,
+    })];
+
+    let (_, findings) = scoring.evaluate(&mspy_evidence);
+    assert!(!findings.is_empty());
+
+    let qm = sentinel_removal::QuarantineManager::new(true);
+    let res = qm.quarantine(&findings[0]);
+    assert!(res.is_err(), "Personal Safety Mode must forbid quarantine");
 }
 
 #[test]

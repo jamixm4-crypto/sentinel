@@ -1,0 +1,51 @@
+name: Bug Report
+description: Create a report to help us fix errors or scanner issues
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a bug. Please provide sufficient details to reproduce the issue.
+  - type: input
+    id: sentinel-version
+    attributes:
+      label: Sentinel Version
+      description: What version of Sentinel are you running? (Run `sentinel --version`)
+      placeholder: e.g., 0.1.2
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      options:
+        - Windows 10/11 (x86_64)
+        - Windows Server
+        - Linux (x86_64)
+        - Linux (aarch64)
+        - macOS (Apple Silicon)
+        - macOS (Intel)
+    validations:
+      required: true
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Exact command line used and steps to trigger the bug.
+      placeholder: e.g., Run `sentinel scan --lang en --out /custom/path`
+    validations:
+      required: true
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual Behavior / Error Message
+      description: Paste terminal output or error messages.
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen instead?
+    validations:
+      required: false

@@ -13,6 +13,8 @@ use crate::log::{get_sentinel_data_dir, log_operation};
 pub enum QuarantineError {
     #[error("Action blocked: this software is managed by your organization and cannot be quarantined.")]
     PolicyBlocked,
+    #[error("Quarantine aborted by safety policy: Personal Safety Mode is active to prevent alerting monitors.")]
+    PersonalSafetyModeActive,
     #[error("Target finding {0} has no removable paths or components.")]
     NoRemovableComponents(String),
     #[error("Filesystem IO error: {0}")]
@@ -23,24 +25,59 @@ pub enum QuarantineError {
 
 pub struct QuarantineManager {
     quarantine_root: PathBuf,
+    personal_safety_mode: bool,
 }
 
 impl Default for QuarantineManager {
     fn default() -> Self {
-        Self::new()
+        Self::new(false)
     }
 }
 
 impl QuarantineManager {
-    pub fn new() -> Self {
+    pub fn new(personal_safety_mode: bool) -> Self {
         let root = get_sentinel_data_dir().join("quarantine");
         Self {
             quarantine_root: root,
+            personal_safety_mode,
         }
+    }
+
+    /// Dry run: simulate quarantine without terminating processes or moving files
+    pub fn dry_run(&self, finding: &Finding) -> Result<Vec<String>, QuarantineError> {
+        if self.personal_safety_mode {
+            return Err(QuarantineError::PersonalSafetyModeActive);
+        }
+        if finding.removal_policy == RemovalPolicy::DoNotRemove {
+            return Err(QuarantineError::PolicyBlocked);
+        }
+
+        let mut actions = Vec::new();
+        for step in &finding.removal_steps.steps {
+            match &step.action {
+                sentinel_core::RemovalAction::TerminateProcess { name } => {
+                    actions.push(format!("Would terminate process '{}'", name));
+                }
+                sentinel_core::RemovalAction::StopService { name } => {
+                    actions.push(format!("Would stop service '{}'", name));
+                }
+                sentinel_core::RemovalAction::QuarantineFile { source_path } => {
+                    actions.push(format!("Would move file '{}' to quarantine vault", source_path));
+                }
+                _ => {
+                    actions.push(format!("Would execute action: {}", step.description));
+                }
+            }
+        }
+        Ok(actions)
     }
 
     /// Quarantine a finding safely and reversibly
     pub fn quarantine(&self, finding: &Finding) -> Result<QuarantineManifest, QuarantineError> {
+        if self.personal_safety_mode {
+            return Err(QuarantineError::PersonalSafetyModeActive);
+        }
+
         if finding.removal_policy == RemovalPolicy::DoNotRemove {
             return Err(QuarantineError::PolicyBlocked);
         }
