@@ -3,7 +3,7 @@
 #   irm https://raw.githubusercontent.com/jamixm4-crypto/sentinel/main/uninstall.ps1 | iex
 #   or locally: powershell -ExecutionPolicy Bypass -File .\uninstall.ps1
 
-Write-Host "🛡️  Sentinel Uninstaller for Windows" -ForegroundColor Cyan
+Write-Host "Sentinel Uninstaller for Windows" -ForegroundColor Cyan
 Write-Host "Stopping any running Sentinel processes..." -ForegroundColor Gray
 Get-Process -Name "sentinel" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 
@@ -26,14 +26,14 @@ foreach ($dir in $ReportLocations) {
         }
     }
 }
-Write-Host "✔ Deleted $ReportCount audit report file(s)." -ForegroundColor Green
+Write-Host "[+] Deleted $ReportCount audit report file(s)." -ForegroundColor Green
 
 # 2. Delete state and quarantine folder (~/.sentinel)
 $DataDir = Join-Path $env:USERPROFILE ".sentinel"
 if (Test-Path $DataDir) {
     Write-Host "Removing state and quarantine vault ($DataDir)..." -ForegroundColor Gray
     Remove-Item -Path $DataDir -Recurse -Force -ErrorAction SilentlyContinue
-    Write-Host "✔ Removed ~/.sentinel directory." -ForegroundColor Green
+    Write-Host "[+] Removed ~/.sentinel directory." -ForegroundColor Green
 }
 
 # 3. Remove Sentinel from user PATH
@@ -43,15 +43,15 @@ if ($UserPath -like "*$InstallDir*") {
     Write-Host "Removing Sentinel from user PATH..." -ForegroundColor Gray
     $NewPath = ($UserPath -split ";" | Where-Object { $_ -ne $InstallDir -and $_ -ne "" }) -join ";"
     [Environment]::SetEnvironmentVariable("Path", $NewPath, "User")
-    Write-Host "✔ Removed Sentinel from user PATH." -ForegroundColor Green
+    Write-Host "[+] Removed Sentinel from user PATH." -ForegroundColor Green
 }
 
 # 4. Remove installation directory
 if (Test-Path $InstallDir) {
     Write-Host "Deleting Sentinel program files ($InstallDir)..." -ForegroundColor Gray
     Remove-Item -Path $InstallDir -Recurse -Force -ErrorAction SilentlyContinue
-    Write-Host "✔ Deleted Sentinel program directory." -ForegroundColor Green
+    Write-Host "[+] Deleted Sentinel program directory." -ForegroundColor Green
 }
 
 Write-Host ""
-Write-Host "✔ Sentinel and all associated reports have been completely removed!" -ForegroundColor Green
+Write-Host "[+] Sentinel and all associated reports have been completely removed!" -ForegroundColor Green
