@@ -7,7 +7,7 @@ $Repo = "jamixm4-crypto/sentinel"
 $InstallDir = "$env:LOCALAPPDATA\Programs\Sentinel"
 $BinName = "sentinel.exe"
 
-Write-Host "🛡️  Sentinel Installer for Windows" -ForegroundColor Cyan
+Write-Host "Sentinel Installer for Windows" -ForegroundColor Cyan
 Write-Host "Fetching latest release information from $Repo..." -ForegroundColor Gray
 
 try {
@@ -30,7 +30,7 @@ if ($Release -and $Release.assets) {
 }
 
 if (-not $AssetUrl) {
-    $AssetUrl = "https://github.com/$Repo/releases/download/$Version/sentinel-x86_64-pc-windows-msvc.zip"
+    $AssetUrl = "https://github.com/$Repo/releases/download/$Version/sentinel-windows-x86_64.zip"
 }
 
 $ShaUrl = "https://github.com/$Repo/releases/download/$Version/SHA256SUMS"
@@ -48,7 +48,7 @@ try {
         $ActualHash = (Get-FileHash -Path $TempZip -Algorithm SHA256).Hash.ToLower()
         Write-Host "Verifying SHA-256: $ActualHash" -ForegroundColor Gray
         if ($ShaContent -match $ActualHash) {
-            Write-Host "✔ Checksum verified successfully!" -ForegroundColor Green
+            Write-Host "Checksum verified successfully!" -ForegroundColor Green
         } else {
             Write-Warning "Checksum mismatch or preview release. Proceeding with caution."
         }
@@ -68,26 +68,22 @@ Expand-Archive -Path $TempZip -DestinationPath $InstallDir -Force
 Remove-Item $TempZip -Force -ErrorAction SilentlyContinue
 
 # Add to User PATH if not present
-$UserPath = [Environment]::GetEnvironmentVariable("PATH", "User")
+$UserPath = [Environment]::GetEnvironmentVariable('PATH', 'User')
 if ($UserPath -notlike "*$InstallDir*") {
-    [Environment]::SetEnvironmentVariable("PATH", "$UserPath;$InstallDir", "User")
+    $NewPath = "$UserPath;$InstallDir"
+    [Environment]::SetEnvironmentVariable('PATH', $NewPath, 'User')
     $env:PATH += ";$InstallDir"
     Write-Host "Added $InstallDir to user PATH." -ForegroundColor Green
 }
 
-Write-Host "`n✔ Sentinel installed successfully!" -ForegroundColor Green
+Write-Host ""
+Write-Host "Sentinel installed successfully!" -ForegroundColor Green
 
 $ExePath = Join-Path $InstallDir $BinName
 if (Test-Path $ExePath) {
-    Write-Host "`n🔍 Запуск первичного аудита безопасности..." -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Running initial security audit..." -ForegroundColor Cyan
     & $ExePath scan --lang ru
-
-    $LatestReport = Get-ChildItem -Path . -Filter "sentinel-report-*.html" -ErrorAction SilentlyContinue | 
-        Sort-Object LastWriteTime -Descending | 
-        Select-Object -First 1
-    if ($LatestReport) {
-        Start-Process $LatestReport.FullName
-    }
 } else {
-    Write-Host "Run 'sentinel scan --lang ru' to perform your first audit." -ForegroundColor Cyan
+    Write-Host "Run 'sentinel scan' to perform your first audit." -ForegroundColor Cyan
 }
