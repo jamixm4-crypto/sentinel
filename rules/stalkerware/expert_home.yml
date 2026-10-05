@@ -1,0 +1,35 @@
+id: "STK-WIN-0092"
+name: "Expert Home / SpyGo Surveillance"
+version: 1
+category: "KeyboardCapture"
+severity: "High"
+base_confidence: 0.95
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "Expert Home"
+description: "Hidden computer spy software capturing keystrokes, social media messages, visited URLs, and screenshots."
+is_legitimate_use_likely: false
+safety_warning: "Covert monitoring software operating without visible desktop windows."
+
+detection:
+  processes:
+    - name: "spygo.exe"
+    - name: "eh.exe"
+    - name: "ehsvc.exe"
+  services:
+    - name: "ehsvc"
+  paths:
+    - "C:\\Program Files\\Expert Home\\"
+    - "C:\\Program Files (x86)\\Expert Home\\"
+    - "C:\\Program Files (x86)\\SpyGo\\"
+  registry_keys:
+    - hive: "HKCU"
+      path: "Software\\Expert Home"
+
+removal:
+  manual_steps_windows: |
+    Kill process eh.exe or spygo.exe and delete installation folder in Program Files.
+
+references:
+  - "https://experthome.ru/"

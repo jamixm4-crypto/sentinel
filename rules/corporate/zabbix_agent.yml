@@ -1,0 +1,61 @@
+id: "CORP-ALL-0017"
+name: "Zabbix Monitoring Agent"
+version: 1
+category: "OrganizationManaged"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "linux"
+  - "macos"
+vendor: "Zabbix SIA"
+description: "Enterprise open-source infrastructure monitoring agent capable of gathering OS metrics, active process tracking, and executing remote commands if system.run is enabled."
+is_legitimate_use_likely: true
+safety_warning: "IT monitoring agent. May be legitimate corporate monitoring or unauthorized telemetry exfiltration if installed on personal devices."
+
+detection:
+  processes:
+    - name: "zabbix_agentd.exe"
+    - name: "zabbix_agent2.exe"
+    - name: "zabbix_agentd"
+    - name: "zabbix_agent2"
+  services:
+    - name: "Zabbix Agent"
+    - name: "Zabbix Agent 2"
+    - name: "zabbix-agent"
+    - name: "zabbix-agent2"
+  paths:
+    - "C:\\Program Files\\Zabbix Agent\\"
+    - "C:\\Program Files\\Zabbix Agent 2\\"
+    - "C:\\zabbix\\"
+    - "/etc/zabbix/"
+    - "/usr/sbin/zabbix_agentd"
+    - "/usr/sbin/zabbix_agent2"
+  network_ports:
+    - 10050
+    - 10051
+  registry_keys:
+    - hive: "HKLM"
+      path: "SYSTEM\\CurrentControlSet\\Services\\Zabbix Agent"
+    - hive: "HKLM"
+      path: "SYSTEM\\CurrentControlSet\\Services\\Zabbix Agent 2"
+    - hive: "HKLM"
+      path: "SOFTWARE\\Zabbix SIA"
+
+removal:
+  manual_steps_windows: |
+    1. Open PowerShell as Administrator.
+    2. Stop and uninstall the service:
+       & "C:\Program Files\Zabbix Agent\zabbix_agentd.exe" --stop
+       & "C:\Program Files\Zabbix Agent\zabbix_agentd.exe" --uninstall
+       Or run: Stop-Service -Name "Zabbix Agent" -Force; sc.exe delete "Zabbix Agent"
+    3. Remove configuration and files in "C:\Program Files\Zabbix Agent" or "C:\zabbix".
+  manual_steps_linux: |
+    sudo systemctl stop zabbix-agent
+    sudo systemctl disable zabbix-agent
+    sudo apt-get purge zabbix-agent  # or yum remove zabbix-agent
+
+references:
+  - "https://www.zabbix.com/documentation/current/en/manual/concepts/agent"
+  - "https://www.zabbix.com/documentation/current/en/manual/concepts/agent2"

@@ -1,0 +1,37 @@
+id: "CORP-ALL-0026"
+name: "Splunk Universal Forwarder"
+version: 1
+category: "OrganizationManaged"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "DoNotRemove"
+platforms:
+  - "windows"
+  - "linux"
+  - "macos"
+vendor: "Splunk Inc."
+description: "Enterprise log forwarding agent collecting Windows Event Logs, files, and host telemetry for SIEM analysis."
+is_legitimate_use_likely: true
+safety_warning: "Corporate security and log forwarding agent. Managed by IT/SOC teams."
+
+detection:
+  processes:
+    - name: "splunkd.exe"
+    - name: "splunk.exe"
+    - name: "splunkd"
+  services:
+    - name: "SplunkForwarder"
+    - name: "Splunkd"
+  paths:
+    - "C:\\Program Files\\SplunkUniversalForwarder\\"
+    - "/opt/splunkforwarder/"
+  network_ports:
+    - 8089
+    - 9997
+
+removal:
+  manual_steps_windows: |
+    Enterprise software. Contact your organization's IT department to request agent removal.
+
+references:
+  - "https://www.splunk.com/en_us/download/universal-forwarder.html"

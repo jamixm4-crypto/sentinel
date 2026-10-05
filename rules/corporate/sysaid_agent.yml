@@ -1,0 +1,35 @@
+id: "CORP-ALL-0028"
+name: "SysAid ITSM Agent"
+version: 1
+category: "OrganizationManaged"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "DoNotRemove"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "SysAid Technologies Ltd."
+description: "IT service management and remote desktop support agent providing automated asset tracking and remote control."
+is_legitimate_use_likely: true
+safety_warning: "Corporate IT service management tool. Automated removal is prohibited."
+
+detection:
+  processes:
+    - name: "SysAidAgent.exe"
+    - name: "SysAidWorker.exe"
+  services:
+    - name: "SysAid Agent"
+    - name: "SysAidAgent"
+  paths:
+    - "C:\\Program Files\\SysAid\\"
+    - "C:\\Program Files (x86)\\SysAid\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\SysAid"
+
+removal:
+  manual_steps_windows: |
+    Enterprise software. Contact your organization's IT department to request agent removal.
+
+references:
+  - "https://documentation.sysaid.com/docs/agent-deployment"

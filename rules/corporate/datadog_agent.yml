@@ -1,0 +1,40 @@
+id: "CORP-ALL-0019"
+name: "Datadog Infrastructure Agent"
+version: 1
+category: "OrganizationManaged"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "DoNotRemove"
+platforms:
+  - "windows"
+  - "linux"
+  - "macos"
+vendor: "Datadog, Inc."
+description: "Enterprise observability agent collecting live process lists, system performance, file integrity events, and network traces."
+is_legitimate_use_likely: true
+safety_warning: "Corporate observability and security agent. Do not remove without IT authorization."
+
+detection:
+  processes:
+    - name: "process-agent.exe"
+    - name: "trace-agent.exe"
+    - name: "security-agent.exe"
+    - name: "datadog-agent"
+  services:
+    - name: "datadogagent"
+    - name: "datadog-agent"
+    - name: "datadog-process-agent"
+  paths:
+    - "C:\\Program Files\\Datadog\\Datadog Agent\\"
+    - "/etc/datadog-agent/"
+    - "/opt/datadog-agent/"
+  network_ports:
+    - 5001
+    - 5002
+
+removal:
+  manual_steps_windows: |
+    Uninstall 'Datadog Agent' via Settings > Apps > Installed apps or contact IT.
+
+references:
+  - "https://docs.datadoghq.com/agent/"

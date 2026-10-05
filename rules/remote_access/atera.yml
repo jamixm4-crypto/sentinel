@@ -1,0 +1,34 @@
+id: "RAT-WIN-0080"
+name: "Atera RMM Agent"
+version: 1
+category: "RemoteAccess"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "Atera Networks Ltd."
+description: "Cloud-based remote monitoring and management agent that facilitates remote shell execution, patch delivery, and remote desktop access."
+is_legitimate_use_likely: true
+safety_warning: "Remote management software with full system privileges. Verify with your IT administrator."
+
+detection:
+  processes:
+    - name: "AteraAgent.exe"
+    - name: "AteraAgentLoader.exe"
+  services:
+    - name: "AteraAgent"
+  paths:
+    - "C:\\Program Files\\Atera Networks\\AteraAgent\\"
+    - "C:\\Program Files (x86)\\Atera Networks\\AteraAgent\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\ATERA Networks"
+
+removal:
+  manual_steps_windows: |
+    Uninstall AteraAgent via Programs and Features or contact your IT service provider.
+
+references:
+  - "https://www.atera.com/"

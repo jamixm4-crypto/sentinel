@@ -1,0 +1,36 @@
+id: "RAT-WIN-0075"
+name: "NinjaOne (NinjaRMM) Agent"
+version: 1
+category: "RemoteAccess"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "NinjaOne LLC"
+description: "Remote monitoring and management agent granting IT administrators remote command execution, remote desktop, and endpoint auditing."
+is_legitimate_use_likely: true
+safety_warning: "Remote management agent. Can be legitimate MSP tool or unauthorized persistence mechanism."
+
+detection:
+  processes:
+    - name: "ninjarmm.exe"
+    - name: "ninja-rmm-agent.exe"
+    - name: "NinjaAgent.exe"
+  services:
+    - name: "NinjaRMM"
+    - name: "NinjaRMMAgent"
+  paths:
+    - "C:\\Program Files (x86)\\NinjaRMM\\"
+    - "C:\\Program Files\\NinjaRMM\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\NinjaRMM"
+
+removal:
+  manual_steps_windows: |
+    Uninstall NinjaRMM via Control Panel or contact your IT managed service provider.
+
+references:
+  - "https://www.ninjaone.com/"

@@ -1,0 +1,39 @@
+id: "STK-WIN-0091"
+name: "NeoSpy Monitoring Software"
+version: 1
+category: "KeyboardCapture"
+severity: "High"
+base_confidence: 0.95
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "NeoSpy"
+description: "Covert monitoring software recording keystrokes, desktop screenshots, visited websites, webcam video, and application activity."
+is_legitimate_use_likely: false
+safety_warning: "Covert surveillance tool. If someone else installed this on your computer, they may be notified if the software is removed."
+
+detection:
+  processes:
+    - name: "neospy.exe"
+    - name: "nsguard.exe"
+    - name: "nsupdate.exe"
+  services:
+    - name: "nsguard"
+  paths:
+    - "C:\\Program Files\\NeoSpy\\"
+    - "C:\\Program Files (x86)\\NeoSpy\\"
+    - "C:\\Windows\\System32\\neospy\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\NeoSpy"
+    - hive: "HKCU"
+      path: "Software\\NeoSpy"
+
+removal:
+  manual_steps_windows: |
+    1. Terminate neospy.exe and nsguard.exe via Task Manager.
+    2. Remove the folder "C:\Program Files\NeoSpy" or "C:\Program Files (x86)\NeoSpy".
+    3. Delete registry key "HKCU\Software\NeoSpy".
+
+references:
+  - "https://neospy.net/"

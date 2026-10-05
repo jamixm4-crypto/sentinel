@@ -46,6 +46,7 @@ pub fn get_all_collectors() -> Vec<Box<dyn Collector>> {
     #[cfg(target_os = "windows")]
     {
         collectors.push(Box::new(windows::WindowsPersistenceCollector));
+        collectors.push(Box::new(windows::WindowsServicesCollector));
         collectors.push(Box::new(windows::WindowsConsentStoreCollector));
         collectors.push(Box::new(windows::WindowsDriversCollector));
         collectors.push(Box::new(windows::WindowsInstalledSoftwareCollector));

@@ -1,0 +1,43 @@
+id: "CORP-ALL-0020"
+name: "Wazuh Security Agent"
+version: 1
+category: "OrganizationManaged"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "linux"
+  - "macos"
+vendor: "Wazuh, Inc."
+description: "Open-source endpoint security and monitoring agent providing file integrity monitoring, active response command execution, and log collection."
+is_legitimate_use_likely: true
+safety_warning: "Security agent with remote command execution capabilities. Verify if this agent is managed by your company's SOC."
+
+detection:
+  processes:
+    - name: "wazuh-agent.exe"
+    - name: "wazuh-agentd"
+    - name: "ossec-agent"
+  services:
+    - name: "Wazuh"
+    - name: "WazuhSvc"
+    - name: "wazuh-agent"
+  paths:
+    - "C:\\Program Files (x86)\\ossec-agent\\"
+    - "C:\\Program Files\\ossec-agent\\"
+    - "/var/ossec/"
+  network_ports:
+    - 1514
+    - 1515
+
+removal:
+  manual_steps_windows: |
+    Stop-Service Wazuh -Force
+    sc.exe delete Wazuh
+  manual_steps_linux: |
+    sudo systemctl stop wazuh-agent
+    sudo systemctl disable wazuh-agent
+
+references:
+  - "https://documentation.wazuh.com/current/user-manual/wazuh-agent/index.html"

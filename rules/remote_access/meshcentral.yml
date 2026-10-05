@@ -1,0 +1,40 @@
+id: "RAT-ALL-0070"
+name: "MeshCentral Remote Agent"
+version: 1
+category: "RemoteAccess"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+  - "linux"
+  - "macos"
+vendor: "MeshCentral Community"
+description: "Open-source remote computer management software enabling web-based remote desktop control, terminal shell access, and file transfer."
+is_legitimate_use_likely: false
+safety_warning: "Remote management tool giving full administrative shell and screen control to a remote web server."
+
+detection:
+  processes:
+    - name: "meshagent.exe"
+    - name: "MeshAgent.exe"
+    - name: "meshagent"
+  services:
+    - name: "MeshCentral"
+    - name: "Mesh Agent"
+    - name: "meshagent"
+  paths:
+    - "C:\\Program Files\\Mesh Agent\\"
+    - "/usr/local/mesh/"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\Open Source\\MeshAgent"
+
+removal:
+  manual_steps_windows: |
+    Stop-Service "Mesh Agent" -Force -ErrorAction SilentlyContinue
+    sc.exe delete "Mesh Agent"
+    Remove-Item -Recurse -Force "C:\Program Files\Mesh Agent"
+
+references:
+  - "https://meshcentral.com/"

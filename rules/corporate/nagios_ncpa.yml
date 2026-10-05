@@ -1,0 +1,42 @@
+id: "CORP-ALL-0023"
+name: "Nagios NCPA & NSClient++"
+version: 1
+category: "OrganizationManaged"
+severity: "Medium"
+base_confidence: 0.85
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "linux"
+vendor: "Nagios Enterprises"
+description: "Host monitoring agents executing active/passive checks, performance tracking, and script execution for Nagios monitoring servers."
+is_legitimate_use_likely: true
+safety_warning: "IT monitoring service. Can be configured to execute external scripts remotely."
+
+detection:
+  processes:
+    - name: "nscp.exe"
+    - name: "ncpa_windows_listener.exe"
+    - name: "ncpa_posix_listener"
+  services:
+    - name: "nscp"
+    - name: "ncpa_listener"
+    - name: "ncpa_passive"
+  paths:
+    - "C:\\Program Files\\NSClient++\\"
+    - "C:\\Program Files (x86)\\Nagios\\NCPA\\"
+    - "/usr/local/ncpa/"
+  network_ports:
+    - 5666
+    - 5693
+
+removal:
+  manual_steps_windows: |
+    Stop-Service nscp -Force -ErrorAction SilentlyContinue
+    sc.exe delete nscp
+    Stop-Service ncpa_listener -Force -ErrorAction SilentlyContinue
+    sc.exe delete ncpa_listener
+
+references:
+  - "https://www.nagios.org/ncpa/"
+  - "https://nsclient.org/"

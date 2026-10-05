@@ -1,0 +1,36 @@
+id: "STK-WIN-0093"
+name: "Ardamax Keylogger"
+version: 1
+category: "KeyboardCapture"
+severity: "High"
+base_confidence: 0.95
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "Ardamax Software"
+description: "Compact keylogger capturing typed text, credentials, clipboard entries, and periodic desktop captures."
+is_legitimate_use_likely: false
+safety_warning: "Covert keylogger. High risk of compromised passwords, banking data, and private conversations."
+
+detection:
+  processes:
+    - name: "akv.exe"
+    - name: "ardamax.exe"
+    - name: "AKV.exe"
+  services:
+    - name: "AKVSVC"
+  paths:
+    - "C:\\Program Files\\Ardamax Keylogger\\"
+    - "C:\\Program Files (x86)\\Ardamax Keylogger\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\Ardamax"
+    - hive: "HKCU"
+      path: "Software\\Ardamax"
+
+removal:
+  manual_steps_windows: |
+    Terminate akv.exe, delete service AKVSVC via sc.exe delete AKVSVC, and remove Ardamax folder.
+
+references:
+  - "https://www.ardamax.com/"

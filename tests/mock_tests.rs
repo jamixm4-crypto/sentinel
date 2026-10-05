@@ -9,7 +9,7 @@ use sentinel_scoring::ScoringEngine;
 fn test_embedded_rules_validity() {
     let rules = get_embedded_rules();
     assert!(!rules.is_empty(), "Embedded rules should not be empty");
-    assert!(rules.len() >= 75, "Expected at least 75 embedded rules");
+    assert!(rules.len() >= 100, "Expected at least 100 embedded rules, got {}", rules.len());
 
     for r in &rules {
         assert!(!r.id.is_empty(), "Rule ID must not be empty");
@@ -406,5 +406,97 @@ fn test_ecs_ndjson_export() {
 
     let ndjson = sentinel_report::export_ecs_ndjson(&scan_result);
     assert!(ndjson.contains(r#""framework":"MITRE ATT&CK""#));
+}
+
+#[test]
+fn test_zabbix_agent_service_and_port_detection() {
+    let rules = get_embedded_rules();
+    let scoring = ScoringEngine::new(&rules, Lang::En);
+
+    // Test 1: Service evidence matching
+    let service_evidence = vec![
+        Evidence::new(
+            EvidenceType::SystemDaemonService,
+            "WindowsServicesCollector",
+            "Windows Service: 'Zabbix Agent' (Zabbix Agent)",
+            "C:\\Program Files\\Zabbix Agent\\zabbix_agentd.exe --config C:\\Program Files\\Zabbix Agent\\zabbix_agentd.conf",
+        )
+        .with_data(EvidenceData::Service {
+            name: "Zabbix Agent".to_string(),
+            display_name: Some("Zabbix Agent".to_string()),
+            binary_path: Some("C:\\Program Files\\Zabbix Agent\\zabbix_agentd.exe".to_string()),
+            start_type: Some("Auto".to_string()),
+        }),
+    ];
+
+    let (_, findings) = scoring.evaluate(&service_evidence);
+    assert!(!findings.is_empty(), "Zabbix service must be detected");
+    let zabbix_finding = findings.iter().find(|f| f.rule_id == "CORP-ALL-0017");
+    assert!(zabbix_finding.is_some(), "Finding must match Zabbix rule CORP-ALL-0017");
+    let zf = zabbix_finding.unwrap();
+    assert_eq!(zf.category, Category::OrganizationManaged);
+    assert_eq!(zf.removal_policy, RemovalPolicy::ManualReview);
+
+    // Test 2: Network port evidence matching (10050)
+    let net_evidence = vec![
+        Evidence::new(
+            EvidenceType::NetworkSocketListener,
+            "NetworkCollector",
+            "TCP listening: 0.0.0.0:10050",
+            "Port 10050",
+        )
+        .with_data(EvidenceData::Network {
+            protocol: "TCP".to_string(),
+            local_address: "0.0.0.0:10050".to_string(),
+            remote_address: None,
+            pid: Some(4040),
+        }),
+    ];
+
+    let (_, net_findings) = scoring.evaluate(&net_evidence);
+    assert!(net_findings.iter().any(|f| f.rule_id == "CORP-ALL-0017"), "Zabbix port 10050 must trigger rule");
+
+    // Test 3: Process evidence matching (zabbix_agentd.exe)
+    let proc_evidence = vec![
+        Evidence::new(
+            EvidenceType::ActiveProcess,
+            "ProcessCollector",
+            "Active process: zabbix_agentd.exe (PID: 4040)",
+            "Path: C:\\Program Files\\Zabbix Agent\\zabbix_agentd.exe",
+        )
+        .with_data(EvidenceData::Process {
+            pid: 4040,
+            name: "zabbix_agentd.exe".to_string(),
+            exe_path: Some("C:\\Program Files\\Zabbix Agent\\zabbix_agentd.exe".to_string()),
+            command_line: Some("\"C:\\Program Files\\Zabbix Agent\\zabbix_agentd.exe\" -c \"C:\\Program Files\\Zabbix Agent\\zabbix_agentd.conf\"".to_string()),
+        }),
+    ];
+
+    let (_, proc_findings) = scoring.evaluate(&proc_evidence);
+    assert!(proc_findings.iter().any(|f| f.rule_id == "CORP-ALL-0017"), "Zabbix process must trigger rule");
+}
+
+#[test]
+fn test_rmm_meshcentral_detection() {
+    let rules = get_embedded_rules();
+    let scoring = ScoringEngine::new(&rules, Lang::En);
+
+    let evidence = vec![
+        Evidence::new(
+            EvidenceType::ActiveProcess,
+            "ProcessCollector",
+            "Active process: meshagent.exe",
+            "Path: C:\\Program Files\\Mesh Agent\\meshagent.exe",
+        )
+        .with_data(EvidenceData::Process {
+            pid: 5050,
+            name: "meshagent.exe".to_string(),
+            exe_path: Some("C:\\Program Files\\Mesh Agent\\meshagent.exe".to_string()),
+            command_line: None,
+        }),
+    ];
+
+    let (_, findings) = scoring.evaluate(&evidence);
+    assert!(findings.iter().any(|f| f.rule_id == "RAT-ALL-0070"), "MeshCentral must be detected");
 }
 

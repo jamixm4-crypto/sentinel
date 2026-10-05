@@ -1,0 +1,33 @@
+id: "CORP-ALL-0024"
+name: "InfluxData Telegraf Agent"
+version: 1
+category: "OrganizationManaged"
+severity: "Low"
+base_confidence: 0.85
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "linux"
+  - "macos"
+vendor: "InfluxData Inc."
+description: "Metrics collection agent gathering OS performance data, process lists, and hardware telemetry."
+is_legitimate_use_likely: true
+safety_warning: "Infrastructure monitoring tool. Review if host is managed or monitored by third parties."
+
+detection:
+  processes:
+    - name: "telegraf.exe"
+    - name: "telegraf"
+  services:
+    - name: "telegraf"
+  paths:
+    - "C:\\Program Files\\Telegraf\\"
+    - "/etc/telegraf/"
+
+removal:
+  manual_steps_windows: |
+    Stop-Service telegraf -Force
+    sc.exe delete telegraf
+
+references:
+  - "https://www.influxdata.com/time-series-platform/telegraf/"

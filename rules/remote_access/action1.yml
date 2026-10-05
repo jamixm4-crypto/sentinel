@@ -1,0 +1,33 @@
+id: "RAT-WIN-0090"
+name: "Action1 Cloud RMM Agent"
+version: 1
+category: "RemoteAccess"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+vendor: "Action1 Corporation"
+description: "Cloud-native remote monitoring, remote desktop support, and vulnerability remediation agent."
+is_legitimate_use_likely: true
+safety_warning: "Remote management client with administrative powers. Review device ownership."
+
+detection:
+  processes:
+    - name: "action1_agent.exe"
+    - name: "action1_srv.exe"
+  services:
+    - name: "Action1 Agent"
+    - name: "Action1_Agent"
+  paths:
+    - "C:\\Program Files\\Action1\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\Action1"
+
+removal:
+  manual_steps_windows: |
+    Enterprise software. Contact your organization's IT department to request agent removal.
+
+references:
+  - "https://www.action1.com/"

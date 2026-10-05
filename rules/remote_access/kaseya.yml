@@ -1,0 +1,35 @@
+id: "RAT-WIN-0085"
+name: "Kaseya VSA Agent"
+version: 1
+category: "RemoteAccess"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "Kaseya US LLC"
+description: "Remote IT infrastructure management agent providing remote script automation, endpoint monitoring, and remote takeover."
+is_legitimate_use_likely: true
+safety_warning: "Remote administration tool. Review whether your computer is corporately managed."
+
+detection:
+  processes:
+    - name: "AgentMon.exe"
+    - name: "KASAgent.exe"
+    - name: "KaseyaEndpoint.exe"
+  services:
+    - name: "KaseyaAgent"
+  paths:
+    - "C:\\Program Files\\Kaseya\\"
+    - "C:\\Program Files (x86)\\Kaseya\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\Kaseya"
+
+removal:
+  manual_steps_windows: |
+    Enterprise software. Contact your organization's IT department to request agent removal.
+
+references:
+  - "https://www.kaseya.com/"

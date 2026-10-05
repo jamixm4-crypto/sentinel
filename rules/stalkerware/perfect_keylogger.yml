@@ -1,0 +1,33 @@
+id: "STK-WIN-0095"
+name: "Perfect Keylogger"
+version: 1
+category: "KeyboardCapture"
+severity: "High"
+base_confidence: 0.95
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "BlazingTools Software"
+description: "Stealth surveillance keylogger recording passwords, keystrokes, active programs, and periodic screen captures."
+is_legitimate_use_likely: false
+safety_warning: "Stealth keystroke logging tool operating without taskbar or system tray presence."
+
+detection:
+  processes:
+    - name: "bpk.exe"
+    - name: "bpkm.exe"
+  services:
+    - name: "BPKService"
+  paths:
+    - "C:\\Program Files\\BPK\\"
+    - "C:\\Program Files (x86)\\BPK\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\BlazingTools"
+
+removal:
+  manual_steps_windows: |
+    Kill bpk.exe and delete BPK folder under Program Files.
+
+references:
+  - "https://www.blazingtools.com/"

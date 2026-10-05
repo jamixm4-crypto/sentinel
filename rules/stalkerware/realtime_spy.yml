@@ -1,0 +1,35 @@
+id: "STK-WIN-0097"
+name: "Realtime-Spy Surveillance"
+version: 1
+category: "KeyboardCapture"
+severity: "High"
+base_confidence: 0.95
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "Spytech Software and Design, Inc."
+description: "Remotely deployable stealth monitoring software logging keystrokes, websites, chats, and sending data to online web panel."
+is_legitimate_use_likely: false
+safety_warning: "Remote stalkerware tool sending private keystrokes and logs to external cloud dashboard."
+
+detection:
+  processes:
+    - name: "rtspy.exe"
+    - name: "rtsmon.exe"
+    - name: "rtsload.exe"
+  services:
+    - name: "RTSMonService"
+  paths:
+    - "C:\\Program Files\\Realtime-Spy\\"
+    - "C:\\Program Files (x86)\\Realtime-Spy\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\Realtime-Spy"
+
+removal:
+  manual_steps_windows: |
+    Kill process rtspy.exe, stop service RTSMonService, and remove Realtime-Spy directory.
+
+references:
+  - "https://www.realtime-spy.com/"

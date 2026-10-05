@@ -1,0 +1,34 @@
+id: "STK-WIN-0094"
+name: "All In One Keylogger"
+version: 1
+category: "KeyboardCapture"
+severity: "High"
+base_confidence: 0.95
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "Relytec"
+description: "Invisible surveillance software that records all keystrokes, sounds from microphone, screenshots, and visited websites."
+is_legitimate_use_likely: false
+safety_warning: "Surveillance software running invisibly in the background."
+
+detection:
+  processes:
+    - name: "aio.exe"
+    - name: "rkfree.exe"
+    - name: "aiosvc.exe"
+  services:
+    - name: "RelytecAIO"
+  paths:
+    - "C:\\Program Files\\All In One Keylogger\\"
+    - "C:\\Program Files (x86)\\Relytec\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\Relytec"
+
+removal:
+  manual_steps_windows: |
+    Kill process aio.exe and remove the Relytec installation directory.
+
+references:
+  - "https://www.relytec.com/"

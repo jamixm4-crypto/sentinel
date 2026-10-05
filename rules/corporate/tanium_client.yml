@@ -1,0 +1,35 @@
+id: "CORP-ALL-0030"
+name: "Tanium Endpoint Platform Client"
+version: 1
+category: "OrganizationManaged"
+severity: "Medium"
+base_confidence: 0.95
+removal_policy: "DoNotRemove"
+platforms:
+  - "windows"
+  - "linux"
+  - "macos"
+vendor: "Tanium Inc."
+description: "Converged endpoint management and security client delivering real-time telemetry, threat detection, and remote administration."
+is_legitimate_use_likely: true
+safety_warning: "Enterprise management and security client. Do not attempt unapproved removal."
+
+detection:
+  processes:
+    - name: "TaniumClient.exe"
+    - name: "TaniumClient"
+  services:
+    - name: "Tanium Client"
+    - name: "TaniumClient"
+  paths:
+    - "C:\\Program Files\\Tanium\\Tanium Client\\"
+    - "/opt/Tanium/TaniumClient/"
+  network_ports:
+    - 17472
+
+removal:
+  manual_steps_windows: |
+    Enterprise software. Contact your organization's IT department to request agent removal.
+
+references:
+  - "https://help.tanium.com/"

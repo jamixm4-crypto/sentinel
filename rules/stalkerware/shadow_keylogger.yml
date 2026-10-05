@@ -1,0 +1,32 @@
+id: "STK-WIN-0098"
+name: "Shadow Keylogger"
+version: 1
+category: "KeyboardCapture"
+severity: "High"
+base_confidence: 0.95
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "Shadow Systems"
+description: "Invisible keystroke and screen recorder capturing passwords, messages, and application events."
+is_legitimate_use_likely: false
+safety_warning: "Covert keylogger tracking all inputs without desktop tray icon."
+
+detection:
+  processes:
+    - name: "ShadowKeylogger.exe"
+    - name: "ShadowService.exe"
+  services:
+    - name: "ShadowKeylogger"
+  paths:
+    - "C:\\Program Files\\Shadow Keylogger\\"
+  registry_keys:
+    - hive: "HKCU"
+      path: "Software\\ShadowKeylogger"
+
+removal:
+  manual_steps_windows: |
+    Kill ShadowKeylogger.exe and delete the folder "C:\Program Files\Shadow Keylogger".
+
+references:
+  - "https://shadowkeylogger.com/"

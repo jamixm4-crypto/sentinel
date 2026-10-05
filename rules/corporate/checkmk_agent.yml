@@ -1,0 +1,36 @@
+id: "CORP-ALL-0027"
+name: "Checkmk Monitoring Agent"
+version: 1
+category: "OrganizationManaged"
+severity: "Low"
+base_confidence: 0.85
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "linux"
+vendor: "Checkmk GmbH"
+description: "Comprehensive infrastructure monitoring agent providing host metrics and plugin check outputs."
+is_legitimate_use_likely: true
+safety_warning: "IT monitoring service. Transmits local host telemetry over TCP 6556."
+
+detection:
+  processes:
+    - name: "check_mk_agent.exe"
+    - name: "cmk-agent-ctl"
+  services:
+    - name: "CheckMkService"
+    - name: "checkmk-agent"
+  paths:
+    - "C:\\Program Files (x86)\\checkmk\\service\\"
+    - "C:\\Program Files\\checkmk\\"
+    - "/usr/lib/check_mk_agent/"
+  network_ports:
+    - 6556
+
+removal:
+  manual_steps_windows: |
+    Stop-Service CheckMkService -Force
+    sc.exe delete CheckMkService
+
+references:
+  - "https://docs.checkmk.com/latest/en/wato_monitoringagents.html"

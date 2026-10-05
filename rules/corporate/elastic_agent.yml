@@ -1,0 +1,38 @@
+id: "CORP-ALL-0022"
+name: "Elastic Agent & Beats"
+version: 1
+category: "OrganizationManaged"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "DoNotRemove"
+platforms:
+  - "windows"
+  - "linux"
+  - "macos"
+vendor: "Elasticsearch B.V."
+description: "Unified monitoring and endpoint security agent collecting system telemetry, process trees, and shipping logs to Elasticsearch."
+is_legitimate_use_likely: true
+safety_warning: "Corporate observability and endpoint protection agent. Do not remove without IT coordination."
+
+detection:
+  processes:
+    - name: "elastic-agent.exe"
+    - name: "metricbeat.exe"
+    - name: "filebeat.exe"
+    - name: "elastic-endpoint.exe"
+    - name: "elastic-agent"
+  services:
+    - name: "Elastic Agent"
+    - name: "elastic-agent"
+    - name: "metricbeat"
+    - name: "filebeat"
+  paths:
+    - "C:\\Program Files\\Elastic\\Agent\\"
+    - "/opt/Elastic/Agent/"
+
+removal:
+  manual_steps_windows: |
+    Enterprise software. Contact your organization's IT department to request agent removal.
+
+references:
+  - "https://www.elastic.co/elastic-agent"

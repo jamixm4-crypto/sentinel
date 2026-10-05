@@ -1,0 +1,36 @@
+id: "CORP-ALL-0025"
+name: "Netdata Real-Time Performance Monitor"
+version: 1
+category: "OrganizationManaged"
+severity: "Low"
+base_confidence: 0.85
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "linux"
+  - "macos"
+vendor: "Netdata, Inc."
+description: "Real-time host performance and health monitoring daemon exposing metrics on web dashboards."
+is_legitimate_use_likely: true
+safety_warning: "Monitoring agent with web dashboard exposing per-second system telemetry."
+
+detection:
+  processes:
+    - name: "netdata.exe"
+    - name: "netdata"
+  services:
+    - name: "netdata"
+  paths:
+    - "C:\\Program Files\\Netdata\\"
+    - "/etc/netdata/"
+    - "/usr/sbin/netdata"
+  network_ports:
+    - 19999
+
+removal:
+  manual_steps_linux: |
+    sudo systemctl stop netdata
+    sudo systemctl disable netdata
+
+references:
+  - "https://www.netdata.cloud/"

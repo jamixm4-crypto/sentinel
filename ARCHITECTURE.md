@@ -83,7 +83,7 @@ sequenceDiagram
 
 ### 3. `sentinel-rules`
 - **Schema**: Declarative schema for surveillance detection rules supporting processes, paths, services, registry keys, scheduled tasks, C2 domains, and condition expressions (`min_matches`, `cmdline_regex`).
-- **Catalog**: 75+ embedded YAML detection rules compiled directly into the binary for 100% offline usage.
+- **Catalog**: 100+ embedded YAML detection rules (103 built-in rules covering stalkerware, keyloggers, remote access/RMM, and IT monitoring suites like Zabbix/Prometheus/Wazuh) compiled directly into the binary for 100% offline usage.
 - **Threat Intelligence**: 280+ known mobile and desktop stalkerware Command-and-Control (C2) domains derived from open threat intelligence feeds (AssoEchap, TinyCheck, Citizen Lab).
 - **RuleMatcher**: Multi-threaded matching engine correlating gathered evidence against rule signatures.
 

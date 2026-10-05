@@ -150,8 +150,8 @@ Sentinel is engineered as a collection of modular Rust crates publishable to cra
 | Crate | Purpose | Key Responsibilities |
 |---|---|---|
 | [`sentinel-core`](crates/core/) | Core Domain Types | Platform detection, evidence representations, finding models, verdicts. |
-| [`sentinel-collectors`](crates/collectors/) | Evidence Gathering | Cross-platform process enumeration, registry ASEPs, consent stores, socket auditing. |
-| [`sentinel-rules`](crates/rules/) | Declarative Rules Engine | 75+ embedded YAML signatures, 280+ C2 domains, regex matcher. |
+| [`sentinel-collectors`](crates/collectors/) | Evidence Gathering | Cross-platform process enumeration, Windows Services registry audit, systemd daemons, registry ASEPs, consent stores, socket auditing. |
+| [`sentinel-rules`](crates/rules/) | Declarative Rules Engine | 100+ embedded YAML signatures (stalkerware, keyloggers, IT monitoring like Zabbix/Prometheus/Wazuh, RMM tools), 280+ C2 domains. |
 | [`sentinel-scoring`](crates/scoring/) | Multi-Factor Correlation | Process masquerading detection, multi-modal corroboration, user allowlisting. |
 | [`sentinel-removal`](crates/removal/) | Remediation & Vault | Encrypted quarantine, SHA-256 state tracking, dry-run safety, clean restore. |
 | [`sentinel-report`](crates/report/) | Multi-Format Exporters | Self-contained HTML report, raw JSON, NDJSON, and Elastic Common Schema (ECS). |

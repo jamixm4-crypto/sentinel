@@ -1,0 +1,38 @@
+id: "CORP-ALL-0021"
+name: "Osquery Endpoint Telemetry Agent"
+version: 1
+category: "OrganizationManaged"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "linux"
+  - "macos"
+vendor: "Osquery Community"
+description: "SQL-powered operating system instrumentation framework that collects system state, running processes, sockets, and hardware info."
+is_legitimate_use_likely: true
+safety_warning: "Observability tool that continuously queries OS telemetry. Review configuration to determine if it is enterprise-managed."
+
+detection:
+  processes:
+    - name: "osqueryd.exe"
+    - name: "osqueryi.exe"
+    - name: "osqueryd"
+  services:
+    - name: "osqueryd"
+  paths:
+    - "C:\\Program Files\\osquery\\"
+    - "/etc/osquery/"
+    - "/var/osquery/"
+
+removal:
+  manual_steps_windows: |
+    Stop-Service osqueryd -Force
+    sc.exe delete osqueryd
+  manual_steps_linux: |
+    sudo systemctl stop osqueryd
+    sudo systemctl disable osqueryd
+
+references:
+  - "https://osquery.io/"

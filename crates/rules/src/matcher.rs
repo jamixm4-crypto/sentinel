@@ -60,8 +60,11 @@ impl<'a> RuleMatcher<'a> {
         match &ev.data {
             Some(EvidenceData::Process { name, exe_path, command_line, .. }) => {
                 let name_lower = name.to_lowercase();
+                let name_trimmed = name_lower.trim_end_matches(".exe");
                 for proc in &rule.detection.processes {
-                    if proc.name.to_lowercase() == name_lower {
+                    let proc_lower = proc.name.to_lowercase();
+                    let proc_trimmed = proc_lower.trim_end_matches(".exe");
+                    if name_lower == proc_lower || name_trimmed == proc_trimmed {
                         if let Some(regex_str) = &proc.cmdline_regex {
                             if let Ok(re) = regex::Regex::new(regex_str) {
                                 let cmd = command_line.as_deref().unwrap_or("");
@@ -98,11 +101,30 @@ impl<'a> RuleMatcher<'a> {
                     }
                 }
             }
-            Some(EvidenceData::Service { name, .. }) => {
+            Some(EvidenceData::Service { name, display_name, binary_path, .. }) => {
                 let name_lower = name.to_lowercase();
+                let disp_lower = display_name.as_deref().unwrap_or("").to_lowercase();
                 for s in &rule.detection.services {
-                    if s.name.to_lowercase() == name_lower {
+                    let s_lower = s.name.to_lowercase();
+                    if name_lower == s_lower || name_lower.contains(&s_lower) || (!disp_lower.is_empty() && disp_lower.contains(&s_lower)) {
                         return true;
+                    }
+                }
+
+                // Correlate service binary path with rule processes and paths
+                if let Some(bpath) = binary_path {
+                    let bpath_lower = bpath.to_lowercase();
+                    for proc in &rule.detection.processes {
+                        let proc_lower = proc.name.to_lowercase();
+                        let proc_trimmed = proc_lower.trim_end_matches(".exe");
+                        if bpath_lower.contains(&proc_lower) || bpath_lower.contains(proc_trimmed) {
+                            return true;
+                        }
+                    }
+                    for p in &rule.detection.paths {
+                        if bpath_lower.contains(&p.to_lowercase()) {
+                            return true;
+                        }
                     }
                 }
             }
@@ -124,7 +146,7 @@ impl<'a> RuleMatcher<'a> {
                 }
                 for port in &rule.detection.network_ports {
                     let port_str = format!(":{}", port);
-                    if local_address.ends_with(&port_str) {
+                    if local_address.ends_with(&port_str) || remote_address.as_ref().map_or(false, |r| r.ends_with(&port_str)) {
                         return true;
                     }
                 }
@@ -133,7 +155,9 @@ impl<'a> RuleMatcher<'a> {
                 // Generic string matching against description
                 let desc_lower = ev.description.to_lowercase();
                 for p in &rule.detection.processes {
-                    if desc_lower.contains(&p.name.to_lowercase()) {
+                    let p_lower = p.name.to_lowercase();
+                    let p_trimmed = p_lower.trim_end_matches(".exe");
+                    if desc_lower.contains(&p_lower) || desc_lower.contains(p_trimmed) {
                         return true;
                     }
                 }

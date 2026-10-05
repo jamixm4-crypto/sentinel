@@ -1,0 +1,34 @@
+id: "RAT-WIN-0095"
+name: "AnyViewer Remote Desktop"
+version: 1
+category: "RemoteAccess"
+severity: "Medium"
+base_confidence: 0.85
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "AOMEI Technology"
+description: "Remote desktop access tool providing unattended screen access, file transfer, and multi-session control."
+is_legitimate_use_likely: false
+safety_warning: "Remote control software. Verify whether you authorized remote access on this computer."
+
+detection:
+  processes:
+    - name: "AnyViewer.exe"
+    - name: "AVService.exe"
+  services:
+    - name: "AnyViewer Service"
+    - name: "AVService"
+  paths:
+    - "C:\\Program Files (x86)\\AnyViewer\\"
+    - "C:\\Program Files\\AnyViewer\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\AnyViewer"
+
+removal:
+  manual_steps_windows: |
+    Uninstall AnyViewer via Windows Settings > Apps > Installed apps.
+
+references:
+  - "https://www.anyviewer.com/"

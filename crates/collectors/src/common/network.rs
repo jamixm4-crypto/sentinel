@@ -26,11 +26,27 @@ impl Collector for NetworkCollector {
                         let pid_str = parts.last().unwrap_or(&"0");
                         let pid = pid_str.parse::<u32>().ok();
 
-                        let is_suspicious_port = local.contains(":5900")
-                            || local.contains(":5901")
-                            || local.contains(":3389")
-                            || local.contains(":7070")
-                            || local.contains(":7906");
+                        let is_suspicious_port = local.ends_with(":10050")  // Zabbix Agent
+                            || local.ends_with(":10051")  // Zabbix Trapper
+                            || local.ends_with(":9100")   // Prometheus node_exporter
+                            || local.ends_with(":9182")   // Prometheus windows_exporter
+                            || local.ends_with(":5666")   // Nagios NRPE
+                            || local.ends_with(":5693")   // Nagios NCPA
+                            || local.ends_with(":6556")   // Checkmk Agent
+                            || local.ends_with(":19999")  // Netdata
+                            || local.ends_with(":8089")   // Splunk
+                            || local.ends_with(":5001")   // Datadog Agent
+                            || local.ends_with(":1514")   // Wazuh
+                            || local.ends_with(":1515")   // Wazuh
+                            || local.ends_with(":5900")   // VNC
+                            || local.ends_with(":5901")   // VNC
+                            || local.ends_with(":5902")   // VNC
+                            || local.ends_with(":3389")   // RDP
+                            || local.ends_with(":7070")   // AnyDesk
+                            || local.ends_with(":7906")   // Remcos / RAT
+                            || local.ends_with(":21115")  // RustDesk
+                            || local.ends_with(":21116")  // RustDesk
+                            || local.ends_with(":21117"); // RustDesk
 
                         let is_remote_established = remote.map(|r| {
                             !r.starts_with("127.0.0.1:")

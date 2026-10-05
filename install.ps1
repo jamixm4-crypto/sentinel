@@ -15,7 +15,7 @@ try {
     $Release = Invoke-RestMethod -Uri $ReleaseUri -UseBasicParsing -Headers @{ "User-Agent" = "PowerShell-Sentinel-Installer" }
     $Version = $Release.tag_name
 } catch {
-    $Version = "v0.1.2"
+    $Version = "v0.1.3"
 }
 
 Write-Host "Target version: $Version" -ForegroundColor Gray

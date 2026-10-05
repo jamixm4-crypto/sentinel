@@ -1,0 +1,42 @@
+id: "CORP-ALL-0018"
+name: "Prometheus Host Exporter"
+version: 1
+category: "OrganizationManaged"
+severity: "Low"
+base_confidence: 0.85
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "linux"
+vendor: "Prometheus Community"
+description: "Telemetry exporter for host metrics including process tracking, CPU, disk, and network stats exposed over HTTP metrics endpoints."
+is_legitimate_use_likely: true
+safety_warning: "Infrastructure observability tool. Verify if this host is a managed server or unintended monitoring endpoint."
+
+detection:
+  processes:
+    - name: "windows_exporter.exe"
+    - name: "wmi_exporter.exe"
+    - name: "node_exporter"
+  services:
+    - name: "windows_exporter"
+    - name: "wmi_exporter"
+    - name: "node_exporter"
+  paths:
+    - "C:\\Program Files\\windows_exporter\\"
+    - "/usr/local/bin/node_exporter"
+  network_ports:
+    - 9182
+    - 9100
+
+removal:
+  manual_steps_windows: |
+    Stop-Service windows_exporter -Force
+    sc.exe delete windows_exporter
+  manual_steps_linux: |
+    sudo systemctl stop node_exporter
+    sudo systemctl disable node_exporter
+
+references:
+  - "https://github.com/prometheus-community/windows_exporter"
+  - "https://github.com/prometheus/node_exporter"

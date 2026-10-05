@@ -1,0 +1,38 @@
+id: "CORP-ALL-0029"
+name: "ManageEngine Endpoint Central Agent"
+version: 1
+category: "OrganizationManaged"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "DoNotRemove"
+platforms:
+  - "windows"
+  - "linux"
+  - "macos"
+vendor: "ManageEngine (Zoho Corp)"
+description: "Unified endpoint management agent providing remote desktop control, patch management, and asset tracking."
+is_legitimate_use_likely: true
+safety_warning: "Corporate endpoint management agent. Automated removal is disabled."
+
+detection:
+  processes:
+    - name: "dcagentservice.exe"
+    - name: "dcupdateservice.exe"
+    - name: "cfgupdate.exe"
+  services:
+    - name: "ManageEngine Endpoint Central - Agent"
+    - name: "DCAgentService"
+  paths:
+    - "C:\\Program Files (x86)\\DesktopCentral_Agent\\"
+    - "C:\\Program Files\\DesktopCentral_Agent\\"
+    - "/usr/local/desktopcentralagent/"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\AdventNet\\DesktopCentral"
+
+removal:
+  manual_steps_windows: |
+    Enterprise software. Contact your organization's IT department to request agent removal.
+
+references:
+  - "https://www.manageengine.com/products/desktop-central/"

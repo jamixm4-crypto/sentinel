@@ -1,0 +1,33 @@
+id: "STK-WIN-0096"
+name: "Revealer Keylogger"
+version: 1
+category: "KeyboardCapture"
+severity: "High"
+base_confidence: 0.95
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "Logixoft"
+description: "Invisible keystroke recorder and screenshot capture tool designed for hidden activity surveillance."
+is_legitimate_use_likely: false
+safety_warning: "Stealth keylogger recording user inputs and screen captures without indicator."
+
+detection:
+  processes:
+    - name: "revealer.exe"
+    - name: "rvl.exe"
+  services:
+    - name: "rvlservice"
+  paths:
+    - "C:\\Program Files\\Revealer Keylogger\\"
+    - "C:\\Program Files (x86)\\Revealer Keylogger\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\Logixoft"
+
+removal:
+  manual_steps_windows: |
+    Kill process revealer.exe / rvl.exe and delete Revealer Keylogger directory.
+
+references:
+  - "https://www.logixoft.com/"

@@ -55,12 +55,42 @@ impl Collector for LinuxPersistenceCollector {
                 if let Ok(entries) = std::fs::read_dir(systemd_user) {
                     for entry in entries.filter_map(Result::ok) {
                         let path = entry.path();
+                        let unit_name = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
                         evidence.push(Evidence::new(
                             EvidenceType::SystemDaemonService,
                             self.name(),
                             format!("User systemd unit: {}", path.display()),
                             std::fs::read_to_string(&path).unwrap_or_default(),
-                        ));
+                        ).with_data(EvidenceData::Service {
+                            name: unit_name.trim_end_matches(".service").to_string(),
+                            display_name: Some(unit_name),
+                            binary_path: Some(path.display().to_string()),
+                            start_type: Some("systemd-user".to_string()),
+                        }));
+                    }
+                }
+            }
+        }
+
+        // 4. Check system-wide systemd units
+        let systemd_system = Path::new("/etc/systemd/system");
+        if systemd_system.exists() {
+            if let Ok(entries) = std::fs::read_dir(systemd_system) {
+                for entry in entries.filter_map(Result::ok) {
+                    let path = entry.path();
+                    let unit_name = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+                    if unit_name.ends_with(".service") {
+                        evidence.push(Evidence::new(
+                            EvidenceType::SystemDaemonService,
+                            self.name(),
+                            format!("System-wide systemd service: {}", path.display()),
+                            std::fs::read_to_string(&path).unwrap_or_default(),
+                        ).with_data(EvidenceData::Service {
+                            name: unit_name.trim_end_matches(".service").to_string(),
+                            display_name: Some(unit_name),
+                            binary_path: Some(path.display().to_string()),
+                            start_type: Some("systemd-system".to_string()),
+                        }));
                     }
                 }
             }
