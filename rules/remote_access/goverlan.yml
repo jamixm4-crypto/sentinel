@@ -1,0 +1,31 @@
+id: "RAT-WIN-0125"
+name: "Goverlan Reach Remote Agent"
+version: 1
+category: "RemoteAccess"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+vendor: "Goverlan, Inc."
+description: "Systems management and remote control agent allowing background management, screen control, and process execution."
+is_legitimate_use_likely: true
+safety_warning: "Remote systems management software with administrative privileges."
+
+detection:
+  processes:
+    - name: "goverlanagent.exe"
+    - name: "govagent.exe"
+  services:
+    - name: "Goverlan Agent"
+    - name: "GovAgent"
+  paths:
+    - "C:\\Program Files\\Goverlan Reach Client\\"
+    - "C:\\Program Files (x86)\\Goverlan Reach Client\\"
+
+removal:
+  manual_steps_windows: |
+    Enterprise software. Contact your organization's IT department to request agent removal.
+
+references:
+  - "https://www.goverlan.com/"

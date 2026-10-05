@@ -1,0 +1,34 @@
+id: "CORP-ALL-0042"
+name: "VictoriaMetrics vmagent"
+version: 1
+category: "OrganizationManaged"
+severity: "Low"
+base_confidence: 0.88
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "linux"
+  - "macos"
+vendor: "VictoriaMetrics"
+description: "High-performance telemetry and metrics scraper agent collecting host performance statistics."
+is_legitimate_use_likely: true
+safety_warning: "Infrastructure monitoring tool."
+
+detection:
+  processes:
+    - name: "vmagent.exe"
+    - name: "vmagent"
+  services:
+    - name: "vmagent"
+  paths:
+    - "C:\\Program Files\\VictoriaMetrics\\"
+  network_ports:
+    - 8429
+
+removal:
+  manual_steps_windows: |
+    Stop-Service vmagent -Force -ErrorAction SilentlyContinue
+    sc.exe delete vmagent
+
+references:
+  - "https://docs.victoriametrics.com/vmagent/"

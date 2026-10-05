@@ -1,0 +1,37 @@
+id: "CORP-ALL-0036"
+name: "Stakhanovets (Стахановец) Employee Monitor"
+version: 1
+category: "OrganizationManaged"
+severity: "Info"
+base_confidence: 0.95
+removal_policy: "DoNotRemove"
+platforms:
+  - "windows"
+vendor: "Stakhanovets LLC"
+description: "Comprehensive corporate employee monitoring and productivity analytics system recording keystrokes, screenshots, audio, and active windows."
+is_legitimate_use_likely: true
+safety_warning: "Corporate monitoring agent. Do not remove without IT permission."
+
+detection:
+  processes:
+    - name: "bosscontrol.exe"
+    - name: "stakhanovets.exe"
+    - name: "stk_service.exe"
+    - name: "stkservice.exe"
+  services:
+    - name: "Stakhanovets"
+    - name: "BossControl"
+    - name: "StkService"
+  paths:
+    - "C:\\Program Files\\Stakhanovets\\"
+    - "C:\\Program Files (x86)\\Boss Control\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\Stakhanovets"
+
+removal:
+  manual_steps_windows: |
+    Enterprise software. Contact your organization's IT department to request agent removal.
+
+references:
+  - "https://stakhanovets.ru/"

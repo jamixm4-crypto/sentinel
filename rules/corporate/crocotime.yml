@@ -1,0 +1,32 @@
+id: "CORP-ALL-0038"
+name: "CrocoTime Time Tracking Agent"
+version: 1
+category: "ProcessWatcher"
+severity: "Low"
+base_confidence: 0.85
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "linux"
+  - "macos"
+vendor: "CrocoTime"
+description: "Time-tracking and employee productivity monitor recording active applications and idle time."
+is_legitimate_use_likely: true
+safety_warning: "Workplace time-tracking agent."
+
+detection:
+  processes:
+    - name: "crocotime-agent.exe"
+    - name: "crocotime-server.exe"
+  services:
+    - name: "CrocoTime Agent"
+  paths:
+    - "C:\\Program Files\\CrocoTime\\"
+    - "C:\\Program Files (x86)\\CrocoTime\\"
+
+removal:
+  manual_steps_windows: |
+    Uninstall CrocoTime via Control Panel > Programs and Features.
+
+references:
+  - "https://crocotime.com/"

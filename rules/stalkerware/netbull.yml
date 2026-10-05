@@ -1,0 +1,31 @@
+id: "STK-WIN-0125"
+name: "NetBull Stealth Keylogger"
+version: 1
+category: "KeyboardCapture"
+severity: "Critical"
+base_confidence: 0.95
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "NetBull Software"
+description: "Stealth keylogger recording all typed passwords, chats, internet search terms, and desktop views."
+is_legitimate_use_likely: false
+safety_warning: "Stealth keylogger configured to deliver keystroke logs via email or FTP."
+
+detection:
+  processes:
+    - name: "netbull.exe"
+    - name: "nbloader.exe"
+    - name: "nbsvc.exe"
+  services:
+    - name: "NetBullService"
+  paths:
+    - "C:\\Program Files\\NetBull\\"
+    - "C:\\Program Files (x86)\\NetBull\\"
+
+removal:
+  manual_steps_windows: |
+    Kill process netbull.exe / nbloader.exe and remove NetBull folder.
+
+references:
+  - "https://www.netbull.com/"

@@ -1,0 +1,33 @@
+id: "RAT-ALL-0130"
+name: "BeyondTrust Remote Support (Bomgar)"
+version: 1
+category: "RemoteAccess"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "DoNotRemove"
+platforms:
+  - "windows"
+  - "linux"
+  - "macos"
+vendor: "BeyondTrust, Inc."
+description: "Enterprise privileged remote support client allowing screen viewing, file transfer, and elevation."
+is_legitimate_use_likely: true
+safety_warning: "Enterprise remote support client. Managed by corporate IT/Helpdesk."
+
+detection:
+  processes:
+    - name: "bomgar-scc.exe"
+    - name: "bomgar-rep.exe"
+    - name: "bomgar-pac.exe"
+  services:
+    - name: "Bomgar"
+  paths:
+    - "C:\\Program Files\\Bomgar\\"
+    - "C:\\Program Files (x86)\\Bomgar\\"
+
+removal:
+  manual_steps_windows: |
+    Enterprise software. Contact your organization's IT department to request agent removal.
+
+references:
+  - "https://www.beyondtrust.com/remote-support"

@@ -1,0 +1,37 @@
+id: "CORP-ALL-0031"
+name: "SearchInform DLP & RiskMonitor"
+version: 1
+category: "OrganizationManaged"
+severity: "Info"
+base_confidence: 0.95
+removal_policy: "DoNotRemove"
+platforms:
+  - "windows"
+vendor: "SearchInform"
+description: "Enterprise data loss prevention (DLP) and employee surveillance agent capturing keystrokes, screenshots, audio, messages, and document transfers."
+is_legitimate_use_likely: true
+safety_warning: "Corporate DLP agent. Managed centrally by enterprise security department."
+
+detection:
+  processes:
+    - name: "EndpointController.exe"
+    - name: "AlertCenter.exe"
+    - name: "SearchInform.exe"
+    - name: "si_agent.exe"
+  services:
+    - name: "SearchInform"
+    - name: "EndpointController"
+    - name: "SI_Service"
+  paths:
+    - "C:\\Program Files\\SearchInform\\"
+    - "C:\\Program Files (x86)\\SearchInform\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\SearchInform"
+
+removal:
+  manual_steps_windows: |
+    Enterprise software. Contact your organization's IT department to request agent removal.
+
+references:
+  - "https://searchinform.ru/"

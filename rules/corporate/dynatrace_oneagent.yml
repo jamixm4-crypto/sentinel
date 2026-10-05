@@ -1,0 +1,35 @@
+id: "CORP-ALL-0045"
+name: "Dynatrace OneAgent Deep Observability"
+version: 1
+category: "OrganizationManaged"
+severity: "Medium"
+base_confidence: 0.95
+removal_policy: "DoNotRemove"
+platforms:
+  - "windows"
+  - "linux"
+  - "macos"
+vendor: "Dynatrace LLC"
+description: "Full-stack observability agent injecting monitoring hooks into runtime processes, capturing network packets, and profiling CPU/memory."
+is_legitimate_use_likely: true
+safety_warning: "Enterprise observability agent. Deeply integrated into operating system processes."
+
+detection:
+  processes:
+    - name: "oneagentos.exe"
+    - name: "oneagentwatchdog.exe"
+    - name: "oneagentnetwork.exe"
+    - name: "oneagentos"
+  services:
+    - name: "Dynatrace OneAgent"
+    - name: "oneagent"
+  paths:
+    - "C:\\Program Files\\dynatrace\\oneagent\\"
+    - "/opt/dynatrace/oneagent/"
+
+removal:
+  manual_steps_windows: |
+    Enterprise software. Contact your organization's IT department to request agent removal.
+
+references:
+  - "https://www.dynatrace.com/platform/oneagent/"

@@ -1,0 +1,29 @@
+id: "STK-ALL-0115"
+name: "Snoopza Computer Monitor"
+version: 1
+category: "KeyboardCapture"
+severity: "High"
+base_confidence: 0.95
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "Snoopza"
+description: "Hidden computer and phone tracker capturing keystrokes, screenshots, camera photos, and internet activity."
+is_legitimate_use_likely: false
+safety_warning: "Commercial stalkerware transmitting local activity to remote dashboard."
+
+detection:
+  processes:
+    - name: "snoopza.exe"
+    - name: "snoopzad"
+  paths:
+    - "C:\\Program Files\\Snoopza\\"
+    - "C:\\Users\\Public\\Snoopza\\"
+
+removal:
+  manual_steps_windows: |
+    Kill snoopza.exe and remove Snoopza directory.
+
+references:
+  - "https://snoopza.com/"

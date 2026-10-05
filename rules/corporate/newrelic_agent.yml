@@ -1,0 +1,33 @@
+id: "CORP-ALL-0046"
+name: "New Relic Infrastructure Agent"
+version: 1
+category: "OrganizationManaged"
+severity: "Low"
+base_confidence: 0.90
+removal_policy: "DoNotRemove"
+platforms:
+  - "windows"
+  - "linux"
+  - "macos"
+vendor: "New Relic, Inc."
+description: "Infrastructure monitoring daemon tracking host metrics, inventory, storage, running processes, and network socket activity."
+is_legitimate_use_likely: true
+safety_warning: "Enterprise infrastructure monitoring agent."
+
+detection:
+  processes:
+    - name: "newrelic-infra.exe"
+    - name: "newrelic-infra-service.exe"
+    - name: "newrelic-infra"
+  services:
+    - name: "newrelic-infra"
+  paths:
+    - "C:\\Program Files\\New Relic\\newrelic-infra\\"
+    - "/etc/newrelic-infra/"
+
+removal:
+  manual_steps_windows: |
+    Enterprise software. Contact your organization's IT department to request agent removal.
+
+references:
+  - "https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/"

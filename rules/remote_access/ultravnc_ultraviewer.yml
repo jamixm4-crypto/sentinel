@@ -1,0 +1,35 @@
+id: "RAT-WIN-0100"
+name: "UltraViewer Remote Desktop"
+version: 1
+category: "RemoteAccess"
+severity: "Medium"
+base_confidence: 0.88
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "DucFabulous Co., Ltd."
+description: "Remote desktop software allowing remote control, file transfer, and chat."
+is_legitimate_use_likely: false
+safety_warning: "Remote access software. Ensure remote desktop session was authorized by you."
+
+detection:
+  processes:
+    - name: "UltraViewer_Desktop.exe"
+    - name: "UltraViewer_Service.exe"
+  services:
+    - name: "UltraViewerService"
+  paths:
+    - "C:\\Program Files\\UltraViewer\\"
+    - "C:\\Program Files (x86)\\UltraViewer\\"
+  network_ports:
+    - 2112
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\UltraViewer"
+
+removal:
+  manual_steps_windows: |
+    Uninstall UltraViewer via Settings > Apps > Installed apps.
+
+references:
+  - "https://www.ultraviewer.net/"

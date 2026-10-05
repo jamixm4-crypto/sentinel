@@ -1,0 +1,35 @@
+id: "CORP-ALL-0035"
+name: "LanAgent Surveillance Suite"
+version: 1
+category: "OrganizationManaged"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "DoNotRemove"
+platforms:
+  - "windows"
+vendor: "NetworkSoft LLC"
+description: "Network employee surveillance system recording keystrokes, screenshots, clipboard, emails, and visited websites."
+is_legitimate_use_likely: true
+safety_warning: "Employee surveillance agent. Verify if installed on personal or company computer."
+
+detection:
+  processes:
+    - name: "la_agent.exe"
+    - name: "laservice.exe"
+    - name: "lanagent.exe"
+  services:
+    - name: "LanAgent"
+    - name: "LAService"
+  paths:
+    - "C:\\Program Files\\LanAgent\\"
+    - "C:\\Program Files (x86)\\LanAgent\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\LanAgent"
+
+removal:
+  manual_steps_windows: |
+    Enterprise software. Contact your organization's IT department to request agent removal.
+
+references:
+  - "https://lanagent.ru/"

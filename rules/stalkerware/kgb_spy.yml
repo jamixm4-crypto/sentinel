@@ -1,0 +1,34 @@
+id: "STK-WIN-0130"
+name: "KGB Keylogger & Spy"
+version: 1
+category: "KeyboardCapture"
+severity: "Critical"
+base_confidence: 0.95
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "KGB Spy Software"
+description: "Covert keystroke recorder and desktop surveillance software capturing typed text, clipboard, and screenshots."
+is_legitimate_use_likely: false
+safety_warning: "Stealth keylogger intercepting all keyboard inputs."
+
+detection:
+  processes:
+    - name: "kgb.exe"
+    - name: "kgbkeylogger.exe"
+    - name: "kgbsvc.exe"
+  services:
+    - name: "KGBService"
+  paths:
+    - "C:\\Program Files\\KGB Keylogger\\"
+    - "C:\\Program Files (x86)\\KGB Keylogger\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\KGB Keylogger"
+
+removal:
+  manual_steps_windows: |
+    Kill process kgb.exe and remove KGB Keylogger directory.
+
+references:
+  - "https://www.relytec.com/"

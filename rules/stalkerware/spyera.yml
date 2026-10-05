@@ -1,0 +1,32 @@
+id: "STK-ALL-0110"
+name: "Spyera Desktop Tracker"
+version: 1
+category: "KeyboardCapture"
+severity: "Critical"
+base_confidence: 0.95
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+  - "macos"
+vendor: "SPYERA"
+description: "High-end surveillance software recording ambient microphone audio, keystrokes, web browsing, Skype/Telegram chats, and emails."
+is_legitimate_use_likely: false
+safety_warning: "Commercial stalkerware running with root/kernel privileges."
+
+detection:
+  processes:
+    - name: "spyera.exe"
+    - name: "spyeractl"
+    - name: "spyerad"
+  services:
+    - name: "SpyeraService"
+  paths:
+    - "C:\\Program Files\\Spyera\\"
+    - "/Library/PreferencePanes/Spyera/"
+
+removal:
+  manual_steps_windows: |
+    Kill process spyera.exe and remove Spyera folder.
+
+references:
+  - "https://spyera.com/"

@@ -1,0 +1,35 @@
+id: "CORP-ALL-0039"
+name: "CurrentWare BrowseControl & AccessPatrol"
+version: 1
+category: "OrganizationManaged"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "DoNotRemove"
+platforms:
+  - "windows"
+vendor: "CurrentWare"
+description: "Endpoint management agent enforcing internet access policies, tracking application usage, and logging removable device transfers."
+is_legitimate_use_likely: true
+safety_warning: "Corporate endpoint policy agent. Do not remove without IT permission."
+
+detection:
+  processes:
+    - name: "cwclient.exe"
+    - name: "cwagent.exe"
+    - name: "cwbrowse.exe"
+  services:
+    - name: "CurrentWare Client"
+    - name: "cwclient"
+  paths:
+    - "C:\\Program Files\\CurrentWare\\"
+    - "C:\\Program Files (x86)\\CurrentWare\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\CurrentWare"
+
+removal:
+  manual_steps_windows: |
+    Enterprise software. Contact your organization's IT department to request agent removal.
+
+references:
+  - "https://www.currentware.com/"

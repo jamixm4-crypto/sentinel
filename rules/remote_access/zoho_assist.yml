@@ -1,0 +1,35 @@
+id: "RAT-ALL-0135"
+name: "Zoho Assist Remote Support"
+version: 1
+category: "RemoteAccess"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "linux"
+  - "macos"
+vendor: "Zoho Corporation"
+description: "Cloud remote support and unattended access software allowing remote screen viewing and administrative control."
+is_legitimate_use_likely: true
+safety_warning: "Remote support client. Verify if unattended access has been configured intentionally."
+
+detection:
+  processes:
+    - name: "ZohoAssist.exe"
+    - name: "ZohoMeeting.exe"
+    - name: "ZohoURS.exe"
+  services:
+    - name: "ZohoAssistService"
+    - name: "ZohoURS"
+  paths:
+    - "C:\\Program Files\\Zoho Meeting\\"
+    - "C:\\Program Files (x86)\\Zoho Meeting\\"
+    - "C:\\Program Files (x86)\\Zoho\\Zoho Assist\\"
+
+removal:
+  manual_steps_windows: |
+    Uninstall Zoho Assist Unattended Agent via Control Panel or Settings > Apps.
+
+references:
+  - "https://www.zoho.com/assist/"

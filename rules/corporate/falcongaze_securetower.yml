@@ -1,0 +1,35 @@
+id: "CORP-ALL-0034"
+name: "Falcongaze SecureTower DLP"
+version: 1
+category: "OrganizationManaged"
+severity: "Info"
+base_confidence: 0.95
+removal_policy: "DoNotRemove"
+platforms:
+  - "windows"
+vendor: "Falcongaze LLC"
+description: "Comprehensive employee surveillance and DLP capturing messenger chats (Telegram, Skype, WhatsApp), keystrokes, screenshots, and audio."
+is_legitimate_use_likely: true
+safety_warning: "Corporate DLP agent. Managed centrally by enterprise security department."
+
+detection:
+  processes:
+    - name: "ftservice.exe"
+    - name: "epagent.exe"
+    - name: "falcongaze.exe"
+  services:
+    - name: "Falcongaze Service"
+    - name: "FTService"
+  paths:
+    - "C:\\Program Files\\Falcongaze\\SecureTower\\"
+    - "C:\\Program Files (x86)\\Falcongaze\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\Falcongaze"
+
+removal:
+  manual_steps_windows: |
+    Enterprise software. Contact your organization's IT department to request agent removal.
+
+references:
+  - "https://falcongaze.com/"

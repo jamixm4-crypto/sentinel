@@ -1,0 +1,38 @@
+id: "CORP-ALL-0041"
+name: "OpenTelemetry (OTel) Collector"
+version: 1
+category: "OrganizationManaged"
+severity: "Low"
+base_confidence: 0.88
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "linux"
+  - "macos"
+vendor: "Cloud Native Computing Foundation (CNCF)"
+description: "Vendor-agnostic proxy that receives, processes and exports telemetry data (metrics, logs, traces) from the host system."
+is_legitimate_use_likely: true
+safety_warning: "Observability and metrics collector."
+
+detection:
+  processes:
+    - name: "otelcol.exe"
+    - name: "otelcol-contrib.exe"
+    - name: "otelcol"
+  services:
+    - name: "otelcol"
+    - name: "otelcol-contrib"
+  paths:
+    - "C:\\Program Files\\OpenTelemetry Collector\\"
+    - "/etc/otelcol/"
+  network_ports:
+    - 4317
+    - 4318
+
+removal:
+  manual_steps_windows: |
+    Stop-Service otelcol -Force -ErrorAction SilentlyContinue
+    sc.exe delete otelcol
+
+references:
+  - "https://opentelemetry.io/docs/collector/"

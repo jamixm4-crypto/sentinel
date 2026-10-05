@@ -1,0 +1,37 @@
+id: "RAT-ALL-0110"
+name: "Getscreen.me Cloud Remote Desktop"
+version: 1
+category: "RemoteAccess"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+  - "linux"
+  - "macos"
+vendor: "Getscreen.me"
+description: "Web-based remote desktop access agent permitting browser-based screen control and command prompt access."
+is_legitimate_use_likely: false
+safety_warning: "Web remote desktop tool providing browser-based remote control."
+
+detection:
+  processes:
+    - name: "getscreen.exe"
+    - name: "getscreen-agent.exe"
+    - name: "getscreen"
+  services:
+    - name: "Getscreen.me"
+    - name: "getscreen"
+  paths:
+    - "C:\\Program Files\\Getscreen.me\\"
+    - "C:\\Program Files (x86)\\Getscreen.me\\"
+    - "/opt/getscreen/"
+
+removal:
+  manual_steps_windows: |
+    Stop-Service Getscreen.me -Force -ErrorAction SilentlyContinue
+    sc.exe delete Getscreen.me
+    Remove-Item -Recurse -Force "C:\Program Files\Getscreen.me"
+
+references:
+  - "https://getscreen.me/"

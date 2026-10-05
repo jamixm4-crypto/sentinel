@@ -1,0 +1,34 @@
+id: "RAT-WIN-0105"
+name: "Supremo Remote Desktop"
+version: 1
+category: "RemoteAccess"
+severity: "Medium"
+base_confidence: 0.88
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "Nanosystems S.r.l."
+description: "Lightweight remote desktop application supporting unattended access and screen sharing."
+is_legitimate_use_likely: false
+safety_warning: "Remote administration software granting full screen and input control."
+
+detection:
+  processes:
+    - name: "Supremo.exe"
+    - name: "SupremoService.exe"
+    - name: "SupremoHelper.exe"
+  services:
+    - name: "SupremoService"
+  paths:
+    - "C:\\Program Files\\Supremo\\"
+    - "C:\\Program Files (x86)\\Supremo\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\Supremo"
+
+removal:
+  manual_steps_windows: |
+    Uninstall Supremo or remove executable from disk.
+
+references:
+  - "https://www.supremocontrol.com/"

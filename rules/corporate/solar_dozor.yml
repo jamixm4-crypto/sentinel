@@ -1,0 +1,33 @@
+id: "CORP-ALL-0033"
+name: "Solar Dozor Endpoint Agent"
+version: 1
+category: "OrganizationManaged"
+severity: "Info"
+base_confidence: 0.95
+removal_policy: "DoNotRemove"
+platforms:
+  - "windows"
+  - "linux"
+vendor: "Rostelecom-Solar"
+description: "Enterprise data loss prevention agent monitoring file transfers, keystrokes, messaging apps, and workstation behavior."
+is_legitimate_use_likely: true
+safety_warning: "Enterprise security agent. Removal is prohibited without IT authorization."
+
+detection:
+  processes:
+    - name: "dozor-agent.exe"
+    - name: "dozor-service.exe"
+    - name: "sd_agent.exe"
+  services:
+    - name: "SolarDozorAgent"
+    - name: "dozor-agent"
+  paths:
+    - "C:\\Program Files\\Solar Security\\Solar Dozor\\"
+    - "C:\\Program Files (x86)\\Solar Dozor\\"
+
+removal:
+  manual_steps_windows: |
+    Enterprise software. Contact your organization's IT department to request agent removal.
+
+references:
+  - "https://rt-solar.ru/products/solar_dozor/"

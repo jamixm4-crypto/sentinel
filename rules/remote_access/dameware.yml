@@ -1,0 +1,35 @@
+id: "RAT-WIN-0140"
+name: "Dameware Mini Remote Control"
+version: 1
+category: "RemoteAccess"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+vendor: "SolarWinds Worldwide, LLC"
+description: "Remote administration tool providing remote desktop control, screenshot viewing, and system management."
+is_legitimate_use_likely: true
+safety_warning: "Remote management software with full desktop interaction."
+
+detection:
+  processes:
+    - name: "DWRCS.exe"
+    - name: "DWMRCS.exe"
+  services:
+    - name: "DWMRCS"
+  paths:
+    - "C:\\Windows\\dwrcs\\"
+    - "C:\\Program Files\\SolarWinds\\Dameware Mini Remote Control\\"
+    - "C:\\Program Files (x86)\\SolarWinds\\Dameware Mini Remote Control\\"
+  network_ports:
+    - 6129
+
+removal:
+  manual_steps_windows: |
+    Stop-Service DWMRCS -Force -ErrorAction SilentlyContinue
+    sc.exe delete DWMRCS
+    Remove-Item -Recurse -Force "C:\Windows\dwrcs"
+
+references:
+  - "https://www.solarwinds.com/dameware-mini-remote-control"

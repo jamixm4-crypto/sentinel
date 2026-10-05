@@ -1,0 +1,33 @@
+id: "CORP-WIN-0044"
+name: "Paessler PRTG Network Monitor Probe"
+version: 1
+category: "OrganizationManaged"
+severity: "Low"
+base_confidence: 0.90
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+vendor: "Paessler AG"
+description: "Remote monitoring probe collecting performance counters, network traffic, and system state for PRTG."
+is_legitimate_use_likely: true
+safety_warning: "Network monitoring probe service."
+
+detection:
+  processes:
+    - name: "PRTG Probe Service.exe"
+    - name: "PRTG Administration Tool.exe"
+  services:
+    - name: "PRTGProbeService"
+  paths:
+    - "C:\\Program Files (x86)\\PRTG Network Monitor\\"
+    - "C:\\Program Files\\PRTG Network Monitor\\"
+  network_ports:
+    - 23560
+
+removal:
+  manual_steps_windows: |
+    Stop-Service PRTGProbeService -Force -ErrorAction SilentlyContinue
+    sc.exe delete PRTGProbeService
+
+references:
+  - "https://www.paessler.com/prtg"

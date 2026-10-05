@@ -1,0 +1,37 @@
+id: "CORP-ALL-0043"
+name: "Fluent Bit Log & Telemetry Forwarder"
+version: 1
+category: "OrganizationManaged"
+severity: "Low"
+base_confidence: 0.88
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "linux"
+  - "macos"
+vendor: "Fluent Organization / CNCF"
+description: "High-performance log processor and forwarder streaming system logs and events to external SIEM/analytics backends."
+is_legitimate_use_likely: true
+safety_warning: "Log forwarding service streaming host events."
+
+detection:
+  processes:
+    - name: "fluent-bit.exe"
+    - name: "fluent-bit"
+    - name: "fluentd.exe"
+  services:
+    - name: "fluent-bit"
+    - name: "fluentd"
+  paths:
+    - "C:\\Program Files\\fluent-bit\\"
+    - "/etc/fluent-bit/"
+  network_ports:
+    - 2020
+
+removal:
+  manual_steps_windows: |
+    Stop-Service fluent-bit -Force -ErrorAction SilentlyContinue
+    sc.exe delete fluent-bit
+
+references:
+  - "https://fluentbit.io/"

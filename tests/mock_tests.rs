@@ -9,7 +9,7 @@ use sentinel_scoring::ScoringEngine;
 fn test_embedded_rules_validity() {
     let rules = get_embedded_rules();
     assert!(!rules.is_empty(), "Embedded rules should not be empty");
-    assert!(rules.len() >= 100, "Expected at least 100 embedded rules, got {}", rules.len());
+    assert!(rules.len() >= 130, "Expected at least 130 embedded rules, got {}", rules.len());
 
     for r in &rules {
         assert!(!r.id.is_empty(), "Rule ID must not be empty");
@@ -498,5 +498,59 @@ fn test_rmm_meshcentral_detection() {
 
     let (_, findings) = scoring.evaluate(&evidence);
     assert!(findings.iter().any(|f| f.rule_id == "RAT-ALL-0070"), "MeshCentral must be detected");
+}
+
+#[test]
+fn test_mipko_personal_monitor_detection() {
+    let rules = get_embedded_rules();
+    let scoring = ScoringEngine::new(&rules, Lang::En);
+
+    let evidence = vec![
+        Evidence::new(
+            EvidenceType::ActiveProcess,
+            "ProcessCollector",
+            "Active process: mpk.exe (PID: 6060)",
+            "Path: C:\\Program Files\\Mipko Personal Monitor\\mpk.exe",
+        )
+        .with_data(EvidenceData::Process {
+            pid: 6060,
+            name: "mpk.exe".to_string(),
+            exe_path: Some("C:\\Program Files\\Mipko Personal Monitor\\mpk.exe".to_string()),
+            command_line: None,
+        }),
+    ];
+
+    let (_, findings) = scoring.evaluate(&evidence);
+    assert!(findings.iter().any(|f| f.rule_id == "STK-WIN-0100"), "Mipko must be detected");
+    let f = findings.iter().find(|f| f.rule_id == "STK-WIN-0100").unwrap();
+    assert_eq!(f.category, Category::KeyboardCapture);
+    assert_eq!(f.removal_policy, RemovalPolicy::SafeAuto);
+}
+
+#[test]
+fn test_searchinform_dlp_detection() {
+    let rules = get_embedded_rules();
+    let scoring = ScoringEngine::new(&rules, Lang::En);
+
+    let evidence = vec![
+        Evidence::new(
+            EvidenceType::SystemDaemonService,
+            "WindowsServicesCollector",
+            "Windows Service: 'SearchInform' (SearchInform)",
+            "C:\\Program Files\\SearchInform\\EndpointController.exe",
+        )
+        .with_data(EvidenceData::Service {
+            name: "SearchInform".to_string(),
+            display_name: Some("SearchInform Endpoint Controller".to_string()),
+            binary_path: Some("C:\\Program Files\\SearchInform\\EndpointController.exe".to_string()),
+            start_type: Some("Auto".to_string()),
+        }),
+    ];
+
+    let (_, findings) = scoring.evaluate(&evidence);
+    assert!(findings.iter().any(|f| f.rule_id == "CORP-ALL-0031"), "SearchInform DLP must be detected");
+    let f = findings.iter().find(|f| f.rule_id == "CORP-ALL-0031").unwrap();
+    assert_eq!(f.category, Category::OrganizationManaged);
+    assert_eq!(f.removal_policy, RemovalPolicy::DoNotRemove);
 }
 

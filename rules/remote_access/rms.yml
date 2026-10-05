@@ -1,0 +1,39 @@
+id: "RAT-WIN-0120"
+name: "RMS (Remote Manipulation System) / Rutserv"
+version: 1
+category: "RemoteAccess"
+severity: "High"
+base_confidence: 0.92
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "TektonIT"
+description: "Remote administration tool (rutserv) frequently used for unauthorized surveillance, remote webcam capture, keylogging, and remote screen viewing."
+is_legitimate_use_likely: false
+safety_warning: "Remote administration server providing full stealth remote control and webcam monitoring."
+
+detection:
+  processes:
+    - name: "rutserv.exe"
+    - name: "rfusclient.exe"
+    - name: "rms.exe"
+  services:
+    - name: "rutserv"
+    - name: "RutservService"
+  paths:
+    - "C:\\Program Files\\Remote Manipulation System - Server\\"
+    - "C:\\Program Files (x86)\\Remote Manipulation System - Server\\"
+  network_ports:
+    - 5655
+  registry_keys:
+    - hive: "HKLM"
+      path: "SYSTEM\\CurrentControlSet\\Services\\rutserv"
+
+removal:
+  manual_steps_windows: |
+    Stop-Service rutserv -Force -ErrorAction SilentlyContinue
+    sc.exe delete rutserv
+    Remove-Item -Recurse -Force "C:\Program Files\Remote Manipulation System - Server"
+
+references:
+  - "https://rmansys.ru/"

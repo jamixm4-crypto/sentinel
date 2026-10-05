@@ -1,0 +1,35 @@
+id: "CORP-ALL-0032"
+name: "InfoWatch Traffic Monitor & Device Monitor"
+version: 1
+category: "OrganizationManaged"
+severity: "Info"
+base_confidence: 0.95
+removal_policy: "DoNotRemove"
+platforms:
+  - "windows"
+vendor: "InfoWatch Group"
+description: "Corporate DLP agent inspecting confidential data, printing, clipboard, screen captures, and external storage access."
+is_legitimate_use_likely: true
+safety_warning: "Enterprise security agent. Removal is prohibited without IT authorization."
+
+detection:
+  processes:
+    - name: "IWDeviceMonitor.exe"
+    - name: "IWEndpoint.exe"
+    - name: "IWTrafficMonitor.exe"
+  services:
+    - name: "IWDeviceMonitor"
+    - name: "IWEndpointService"
+  paths:
+    - "C:\\Program Files\\InfoWatch\\"
+    - "C:\\Program Files (x86)\\InfoWatch\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\InfoWatch"
+
+removal:
+  manual_steps_windows: |
+    Enterprise software. Contact your organization's IT department to request agent removal.
+
+references:
+  - "https://www.infowatch.ru/"

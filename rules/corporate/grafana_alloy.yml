@@ -1,0 +1,38 @@
+id: "CORP-ALL-0040"
+name: "Grafana Agent & Alloy Telemetry Collector"
+version: 1
+category: "OrganizationManaged"
+severity: "Low"
+base_confidence: 0.88
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+  - "linux"
+  - "macos"
+vendor: "Grafana Labs"
+description: "Telemetry collector gathering host metrics, logs, and traces and forwarding them to Grafana Cloud or Prometheus."
+is_legitimate_use_likely: true
+safety_warning: "Infrastructure telemetry agent."
+
+detection:
+  processes:
+    - name: "grafana-agent.exe"
+    - name: "alloy.exe"
+    - name: "grafana-agent-flow.exe"
+  services:
+    - name: "grafana-agent"
+    - name: "alloy"
+  paths:
+    - "C:\\Program Files\\Grafana Agent\\"
+    - "C:\\Program Files\\Grafana Alloy\\"
+    - "/etc/alloy/"
+  network_ports:
+    - 12345
+
+removal:
+  manual_steps_windows: |
+    Stop-Service grafana-agent -Force -ErrorAction SilentlyContinue
+    sc.exe delete grafana-agent
+
+references:
+  - "https://grafana.com/docs/alloy/latest/"

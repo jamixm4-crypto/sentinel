@@ -1,0 +1,32 @@
+id: "CORP-ALL-0037"
+name: "Bitcop Employee Tracking Agent"
+version: 1
+category: "ProcessWatcher"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "ManualReview"
+platforms:
+  - "windows"
+vendor: "Bitcop LLC"
+description: "Cloud-based employee monitoring agent recording active application time, screen snapshots, and website history."
+is_legitimate_use_likely: true
+safety_warning: "Workplace time-tracking and screenshot capture agent."
+
+detection:
+  processes:
+    - name: "bitcop.exe"
+    - name: "bitcop_agent.exe"
+    - name: "bitcopservice.exe"
+  services:
+    - name: "Bitcop"
+    - name: "BitcopService"
+  paths:
+    - "C:\\Program Files\\Bitcop\\"
+    - "C:\\Program Files (x86)\\Bitcop\\"
+
+removal:
+  manual_steps_windows: |
+    Uninstall Bitcop via Control Panel or Settings > Apps.
+
+references:
+  - "https://bitcop.ru/"

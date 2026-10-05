@@ -1,0 +1,33 @@
+id: "RAT-ALL-0145"
+name: "Remotely Remote Desktop Agent"
+version: 1
+category: "RemoteAccess"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+  - "linux"
+vendor: "Remotely / Translucent Computing"
+description: "Open-source remote desktop control agent providing unattended screen sharing, file transfer, and remote terminal."
+is_legitimate_use_likely: false
+safety_warning: "Remote desktop client providing remote control capabilities."
+
+detection:
+  processes:
+    - name: "Remotely_Agent.exe"
+    - name: "Remotely_Desktop.exe"
+  services:
+    - name: "Remotely Agent"
+    - name: "RemotelyAgent"
+  paths:
+    - "C:\\Program Files\\Remotely\\"
+
+removal:
+  manual_steps_windows: |
+    Stop-Service "Remotely Agent" -Force -ErrorAction SilentlyContinue
+    sc.exe delete "Remotely Agent"
+    Remove-Item -Recurse -Force "C:\Program Files\Remotely"
+
+references:
+  - "https://github.com/immense/Remotely"

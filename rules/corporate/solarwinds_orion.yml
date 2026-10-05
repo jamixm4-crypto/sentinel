@@ -1,0 +1,32 @@
+id: "CORP-WIN-0047"
+name: "SolarWinds Orion Agent"
+version: 1
+category: "OrganizationManaged"
+severity: "Medium"
+base_confidence: 0.90
+removal_policy: "DoNotRemove"
+platforms:
+  - "windows"
+vendor: "SolarWinds Worldwide, LLC"
+description: "Enterprise network and systems management agent gathering performance statistics, active processes, and executing polling tasks."
+is_legitimate_use_likely: true
+safety_warning: "Enterprise systems management agent."
+
+detection:
+  processes:
+    - name: "SolarWinds.Agent.Service.exe"
+    - name: "SolarWinds.BusinessLayerHost.exe"
+  services:
+    - name: "SolarWindsAgent"
+  paths:
+    - "C:\\Program Files (x86)\\SolarWinds\\Agent\\"
+    - "C:\\Program Files\\SolarWinds\\Agent\\"
+  network_ports:
+    - 17777
+
+removal:
+  manual_steps_windows: |
+    Enterprise software. Contact your organization's IT department to request agent removal.
+
+references:
+  - "https://www.solarwinds.com/"

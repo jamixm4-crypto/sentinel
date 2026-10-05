@@ -1,0 +1,38 @@
+id: "STK-WIN-0100"
+name: "Mipko Personal Monitor & Employee Monitor"
+version: 1
+category: "KeyboardCapture"
+severity: "Critical"
+base_confidence: 0.95
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "Mipko"
+description: "Hidden computer surveillance software recording keystrokes, social media messages, webcam photos, visited URLs, and periodic screenshots."
+is_legitimate_use_likely: false
+safety_warning: "Stealth surveillance keylogger operating invisibly without desktop windows."
+
+detection:
+  processes:
+    - name: "mpk.exe"
+    - name: "mpksvc.exe"
+    - name: "mpkmon.exe"
+  services:
+    - name: "MPKService"
+    - name: "mpksvc"
+  paths:
+    - "C:\\Program Files\\Mipko Personal Monitor\\"
+    - "C:\\Program Files (x86)\\Mipko Employee Monitor\\"
+    - "C:\\Program Files\\Mipko\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\Mipko"
+    - hive: "HKCU"
+      path: "Software\\Mipko"
+
+removal:
+  manual_steps_windows: |
+    Kill process mpk.exe and mpksvc.exe, delete service MPKService, and remove Mipko directory.
+
+references:
+  - "https://www.mipko.ru/"

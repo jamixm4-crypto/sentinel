@@ -1,0 +1,34 @@
+id: "STK-ALL-0120"
+name: "ClevGuard / KidsGuard Monitor"
+version: 1
+category: "KeyboardCapture"
+severity: "High"
+base_confidence: 0.95
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "ClevGuard"
+description: "Parental/surveillance monitor recording typed keystrokes, social chat conversations, and periodic screenshots."
+is_legitimate_use_likely: false
+safety_warning: "Surveillance application transmitting computer activity to ClevGuard online panel."
+
+detection:
+  processes:
+    - name: "kidsguard.exe"
+    - name: "clevguard.exe"
+    - name: "cgservice.exe"
+  services:
+    - name: "CGService"
+  paths:
+    - "C:\\Program Files\\ClevGuard\\"
+    - "C:\\Program Files (x86)\\KidsGuard\\"
+  registry_keys:
+    - hive: "HKLM"
+      path: "SOFTWARE\\ClevGuard"
+
+removal:
+  manual_steps_windows: |
+    Kill process kidsguard.exe and remove ClevGuard directory.
+
+references:
+  - "https://www.clevguard.com/"

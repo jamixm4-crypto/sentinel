@@ -1,0 +1,39 @@
+id: "RAT-WIN-0115"
+name: "LiteManager Remote Administration"
+version: 1
+category: "RemoteAccess"
+severity: "High"
+base_confidence: 0.92
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "LiteManagerTeam"
+description: "Remote administration tool (ROMServer) providing remote desktop, task manager, audio/video monitoring, and terminal access."
+is_legitimate_use_likely: false
+safety_warning: "Remote administration tool often deployed surreptitiously for persistent remote control."
+
+detection:
+  processes:
+    - name: "ROMServer.exe"
+    - name: "ROMViewer.exe"
+  services:
+    - name: "RServer3"
+    - name: "ROMServer"
+  paths:
+    - "C:\\Program Files\\LiteManager Pro - Server\\"
+    - "C:\\Program Files (x86)\\LiteManager Free - Server\\"
+  network_ports:
+    - 5650
+    - 5651
+  registry_keys:
+    - hive: "HKLM"
+      path: "SYSTEM\\CurrentControlSet\\Services\\RServer3"
+
+removal:
+  manual_steps_windows: |
+    Stop-Service RServer3 -Force -ErrorAction SilentlyContinue
+    sc.exe delete RServer3
+    Remove-Item -Recurse -Force "C:\Program Files\LiteManager Pro - Server"
+
+references:
+  - "https://www.litemanager.com/"

@@ -1,0 +1,35 @@
+id: "STK-WIN-0105"
+name: "IzyMonitor Surveillance Suite"
+version: 1
+category: "KeyboardCapture"
+severity: "High"
+base_confidence: 0.95
+removal_policy: "SafeAuto"
+platforms:
+  - "windows"
+vendor: "IzyMonitor"
+description: "Covert monitoring software recording typed keystrokes, passwords, clipboard text, and webcam frames."
+is_legitimate_use_likely: false
+safety_warning: "Stealth surveillance agent hidden from Task Manager."
+
+detection:
+  processes:
+    - name: "izymonitor.exe"
+    - name: "izysvc.exe"
+    - name: "izyguard.exe"
+  services:
+    - name: "IzyService"
+    - name: "IzyMonitor"
+  paths:
+    - "C:\\Program Files\\IzyMonitor\\"
+    - "C:\\Program Files (x86)\\IzyMonitor\\"
+  registry_keys:
+    - hive: "HKCU"
+      path: "Software\\IzyMonitor"
+
+removal:
+  manual_steps_windows: |
+    Kill izymonitor.exe and delete IzyMonitor directory in Program Files.
+
+references:
+  - "https://izymonitor.com/"
