@@ -43,7 +43,7 @@ In situations involving domestic abuse or stalking:
   1. **Zero Disk Artifacts**: No HTML or JSON report files are saved to the local filesystem (in-memory terminal output only), preventing the abuser from finding report files.
   2. **Browser Suppression**: The default web browser is not launched, leaving no browser history, cache, or tabs.
   3. **Strict Remediation Lockdown**: Automated removal and quarantine are strictly disabled.
-  4. **Safety Guidance**: The terminal displays emergency hotlines ([Coalition Against Stalkerware](https://stopstalkerware.org), [Lila.help](https://lila.help), National DV Hotline: 1-800-799-SAFE).
+  4. **Safety Guidance**: The terminal displays international assistance resources ([Coalition Against Stalkerware](https://stopstalkerware.org), [Lila.help](https://lila.help)).
 
 ---
 

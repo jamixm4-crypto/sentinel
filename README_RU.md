@@ -185,10 +185,9 @@ Sentinel спроектирован как набор изолированных
 - **Нулевой файловый след**: HTML и JSON файлы **не сохраняются** на локальный диск; результаты выводятся только в защищённое окно терминала.
 - **Подавление автооткрытия браузера**: браузер не запускается автоматически, не оставляя истории просмотров и кэша.
 - **Блокировка изменения системы**: все команды `remove` и `quarantine` **строго заблокированы** во избежание демаскировки жертвы.
-- **Безопасные контакты**: выводятся ссылки на ресурсы психологической и юридической помощи:
+- **Безопасные ресурсы**: ссылки на защитные организации и справочники помощи:
   - [Coalition Against Stalkerware](https://stopstalkerware.org)
-  - Международный справочник горячих линий: [Lila.help](https://lila.help)
-  - Национальная горячая линия по вопросам домашнего насилия: 1-800-799-SAFE
+  - Международный справочник служб поддержки: [Lila.help](https://lila.help)
 
 ---
 
@@ -221,6 +220,32 @@ sentinel remove --all-safe --execute
 sentinel allow list
 sentinel allow add "my_custom_tool.exe"
 sentinel allow remove "my_custom_tool.exe"
+```
+
+---
+
+## Полное удаление и очистка отчётов
+
+Sentinel оставляет минимальный след в системе и предоставляет средства для моментального и чистого удаления самого сканера, его хранилищ и созданных отчётов:
+
+### 1. Встроенная команда `purge`
+```bash
+# Удалить только сформированные отчёты (sentinel-report-*.html/json/ndjson):
+sentinel purge --reports-only -y
+
+# Полная зачистка: удалить все отчёты, сбросить хранилище ~/.sentinel и деинсталлировать Sentinel:
+sentinel purge -y
+```
+
+### 2. Скрипты удаления в одну команду
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/jamixm4-crypto/sentinel/main/uninstall.ps1 | iex
+```
+
+**Linux & macOS (Bash):**
+```bash
+curl -fsSL https://raw.githubusercontent.com/jamixm4-crypto/sentinel/main/uninstall.sh | bash
 ```
 
 ---

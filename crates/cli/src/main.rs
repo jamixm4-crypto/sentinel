@@ -151,6 +151,21 @@ enum Commands {
         #[command(subcommand)]
         action: RulesCommands,
     },
+
+    /// Completely uninstall Sentinel, delete quarantine vault, remove all audit reports and config files
+    Purge {
+        /// Suppress interactive confirmation prompt
+        #[arg(short, long)]
+        yes: bool,
+
+        /// Path to custom directory to clean reports from (defaults to current directory)
+        #[arg(long, default_value = ".")]
+        reports_dir: PathBuf,
+
+        /// Only delete audit reports (sentinel-report-*), keeping binary and settings
+        #[arg(long)]
+        reports_only: bool,
+    },
 }
 
 #[derive(Subcommand, Debug)]
@@ -345,12 +360,19 @@ fn main() {
                         }
                     }
                 } else {
-                    println!("Rule set is up to date (75+ embedded rules, 280+ C2 domains).");
+                    println!("Rule set is up to date (100+ embedded rules, 280+ C2 domains).");
                     println!("To import external rules or C2 domain feeds offline, run:");
                     println!("  {}", "sentinel rules update --from <path/to/rules_or_c2.txt>".cyan());
                 }
             }
         },
+        Commands::Purge {
+            yes,
+            reports_dir,
+            reports_only,
+        } => {
+            execute_purge(yes, &reports_dir, reports_only);
+        }
     }
 }
 
@@ -1035,3 +1057,119 @@ fn run_offline_disk_scan(
 
     evidence
 }
+
+fn execute_purge(yes: bool, reports_dir: &Path, reports_only: bool) {
+    if !yes {
+        println!();
+        if reports_only {
+            print!("Are you sure you want to delete all Sentinel audit reports in '{}'? [y/N]: ", reports_dir.display());
+        } else {
+            print!("Are you sure you want to completely uninstall Sentinel, purge ~/.sentinel, and delete all reports? [y/N]: ");
+        }
+        use std::io::{self, Write};
+        let _ = io::stdout().flush();
+        let mut input = String::new();
+        if io::stdin().read_line(&mut input).is_err() || !matches!(input.trim().to_lowercase().as_str(), "y" | "yes" | "д" | "да") {
+            println!("Operation cancelled.");
+            return;
+        }
+    }
+
+    println!();
+    println!("  {} {}", "🗑️".red(), "PURGING SENTINEL ARTIFACTS".bold());
+
+    // 1. Delete audit reports in reports_dir and user home dir
+    let mut deleted_reports = 0;
+    let mut dirs_to_check = vec![reports_dir.to_path_buf()];
+    if let Some(home) = dirs::home_dir() {
+        if home != reports_dir {
+            dirs_to_check.push(home);
+        }
+    }
+
+    for dir in dirs_to_check {
+        if let Ok(entries) = std::fs::read_dir(&dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_file() {
+                    if let Some(fname) = path.file_name().and_then(|n| n.to_str()) {
+                        if fname.starts_with("sentinel-report-") && (fname.ends_with(".html") || fname.ends_with(".json") || fname.ends_with(".ndjson")) {
+                            if std::fs::remove_file(&path).is_ok() {
+                                deleted_reports += 1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    println!("  • Deleted {} audit report file(s).", deleted_reports);
+
+    if reports_only {
+        println!();
+        println!("{} Audit reports cleaned successfully.", "✔".green());
+        return;
+    }
+
+    // 2. Remove ~/.sentinel
+    let data_dir = get_sentinel_data_dir();
+    if data_dir.exists() {
+        match std::fs::remove_dir_all(&data_dir) {
+            Ok(_) => println!("  • Removed data directory (~/.sentinel)."),
+            Err(e) => eprintln!("  • Failed to remove ~/.sentinel: {}", e),
+        }
+    }
+
+    // 3. Platform-specific uninstall
+    #[cfg(windows)]
+    {
+        // Clean user PATH
+        let install_dir = dirs::data_local_dir()
+            .map(|p| p.join("Programs").join("Sentinel"));
+        if let Some(ref dir) = install_dir {
+            let dir_str = dir.to_string_lossy();
+            let script = format!(
+                "$p = [Environment]::GetEnvironmentVariable('Path', 'User'); if ($p -like '*{}*') {{ $n = ($p -split ';' | Where-Object {{ $_ -ne '{}' -and $_ -ne '' }}) -join ';'; [Environment]::SetEnvironmentVariable('Path', $n, 'User') }}",
+                dir_str, dir_str
+            );
+            let _ = std::process::Command::new("powershell")
+                .args(["-NoProfile", "-Command", &script])
+                .output();
+            println!("  • Cleaned Sentinel from User PATH.");
+        }
+
+        // Schedule self-delete if running from installation folder
+        if let Ok(curr_exe) = std::env::current_exe() {
+            let parent = curr_exe.parent().unwrap_or(Path::new("."));
+            let is_installed_loc = install_dir.as_ref().map_or(false, |d| parent == d.as_path());
+            if is_installed_loc {
+                let cmd = format!(
+                    "timeout /t 1 /nobreak >nul & del /f /q \"{}\" & rmdir /s /q \"{}\"",
+                    curr_exe.display(),
+                    parent.display()
+                );
+                let _ = std::process::Command::new("cmd")
+                    .args(["/c", &cmd])
+                    .spawn();
+                println!("  • Scheduled removal of program directory ({}).", parent.display());
+            } else {
+                println!("  • Standalone binary at '{}'. You may remove it manually.", curr_exe.display());
+            }
+        }
+    }
+
+    #[cfg(not(windows))]
+    {
+        if let Ok(curr_exe) = std::env::current_exe() {
+            if std::fs::remove_file(&curr_exe).is_ok() {
+                println!("  • Removed Sentinel binary ({}).", curr_exe.display());
+            } else {
+                println!("  • Note: Remove '{}' manually (may require sudo).", curr_exe.display());
+            }
+        }
+    }
+
+    println!();
+    println!("{} Sentinel has been successfully purged.", "✔".green());
+}
+

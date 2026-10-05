@@ -190,10 +190,9 @@ In intimate partner violence or domestic stalking scenarios, modifying or removi
 - **Zero Local Disk Artifacts**: No HTML or JSON reports are created on disk; findings are output exclusively to the terminal in memory.
 - **Browser Suppression**: The default web browser is not launched, leaving no browser history, cache, or tabs.
 - **Modifications Locked**: All `remove` and `quarantine` commands are **strictly blocked**.
-- **Support Resources**: The scan displays international hotlines and safety resources:
+- **Support Resources**: Guidance on covert safety planning without alerting attackers:
   - [Coalition Against Stalkerware](https://stopstalkerware.org)
   - Global Support Directory: [Lila.help](https://lila.help)
-  - US National Domestic Violence Hotline: `1-800-799-SAFE` (SMS: text "START" to 88788)
 
 ---
 
@@ -228,6 +227,32 @@ Manage your local allowlist to suppress expected administrative tools:
 sentinel allow list
 sentinel allow add "my_admin_tool.exe"
 sentinel allow remove "my_admin_tool.exe"
+```
+
+---
+
+## Complete Uninstallation & Trace Purge
+
+Sentinel leaves minimal trace, and provides simple commands to cleanly wipe the binary, all generated reports, and quarantine vaults:
+
+### 1. Built-In CLI Purge Command
+```bash
+# Delete all generated reports (sentinel-report-*.html/json) without uninstalling:
+sentinel purge --reports-only -y
+
+# Completely wipe Sentinel: delete all reports, remove ~/.sentinel, and clean PATH/binary:
+sentinel purge -y
+```
+
+### 2. One-Liner Uninstaller Scripts
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/jamixm4-crypto/sentinel/main/uninstall.ps1 | iex
+```
+
+**Linux & macOS (Bash):**
+```bash
+curl -fsSL https://raw.githubusercontent.com/jamixm4-crypto/sentinel/main/uninstall.sh | bash
 ```
 
 ---

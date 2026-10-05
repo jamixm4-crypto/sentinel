@@ -217,15 +217,6 @@ pub fn render_html_string(result: &ScanResult, _lang: Lang) -> String {
     margin: 6px 0;
     display: block;
   }}
-  .safety-box {{
-    background: rgba(244, 63, 94, 0.08);
-    border: 1px solid var(--danger);
-    border-radius: 12px;
-    padding: 20px;
-    margin-top: 32px;
-    font-size: 14px;
-  }}
-  .safety-box h3 {{ color: var(--danger); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }}
   footer {{
     margin-top: 40px;
     padding-top: 20px;
@@ -325,18 +316,6 @@ pub fn render_html_string(result: &ScanResult, _lang: Lang) -> String {
   </div>
 
   <div id="findingsContainer"></div>
-
-  <div class="safety-box">
-    <h3 id="safetyTitle">🚨 Suspecting personal surveillance by someone you know?</h3>
-    <p id="safetyBody">
-      <strong>Important Safety Advisory:</strong> Removing or disabling stalkerware may immediately alert the person monitoring you.
-      If you are in danger, plan your safety steps using a separate, unmonitored device before taking action.
-      <br><br>
-      • <strong>Coalition Against Stalkerware:</strong> <a href="https://stopstalkerware.org" target="_blank" style="color:var(--accent);">stopstalkerware.org</a><br>
-      • <strong>National Domestic Violence Hotline (US):</strong> 1-800-799-SAFE (7233) | Text START to 88788<br>
-      • <strong>International Directory of Support:</strong> <a href="https://lila.help" target="_blank" style="color:var(--accent);">lila.help</a>
-    </p>
-  </div>
 
   <div class="card" style="margin-top: 24px;">
     <h4 style="margin-bottom: 8px;">⚖️ Technical Limitations & Transparency</h4>
@@ -482,11 +461,9 @@ pub fn render_html_string(result: &ScanResult, _lang: Lang) -> String {
     if (currentLang === 'RU') {{
       document.getElementById('verdictTitle').innerText = 'Аудит завершён';
       document.getElementById('verdictSubtitle').innerText = 'Подробный анализ процессов, автозагрузки и системных служб.';
-      document.getElementById('safetyTitle').innerText = '🚨 Подозреваете личную слежку со стороны конкретного человека?';
     }} else {{
       document.getElementById('verdictTitle').innerText = 'Scan Completed';
       document.getElementById('verdictSubtitle').innerText = 'Detailed analysis of active processes, startup hooks, and background services.';
-      document.getElementById('safetyTitle').innerText = '🚨 Suspecting personal surveillance by someone you know?';
     }}
   }}
 
