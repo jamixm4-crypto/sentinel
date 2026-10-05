@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Sentinel Linux & macOS Installer with SHA-256 Checksum Verification
-# Usage: curl -fsSL https://raw.githubusercontent.com/sentinel-sec/sentinel/main/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/jamixm4-crypto/sentinel/main/install.sh | bash
 
 set -euo pipefail
 

@@ -5,7 +5,7 @@ pub mod loader;
 pub mod matcher;
 pub mod schema;
 
-pub use c2_domains::{matches_known_c2, KNOWN_C2_DOMAINS};
+pub use c2_domains::{matches_c2_with_custom, matches_known_c2, KNOWN_C2_DOMAINS};
 pub use loader::{load_rule_file, load_rule_from_str, load_rules_from_dir, validate_rule, RuleLoadError};
 pub use matcher::{RuleMatch, RuleMatcher};
 pub use schema::{

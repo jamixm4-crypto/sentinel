@@ -130,6 +130,24 @@ pub fn matches_known_c2(host: &str) -> Option<&'static str> {
     None
 }
 
+/// Matches a domain or IP against embedded C2 domains and additional custom C2 domain indicators.
+pub fn matches_c2_with_custom(host: &str, custom_list: &[String]) -> Option<String> {
+    let host_lower = host.trim().to_lowercase();
+    let host_clean = host_lower.split(':').next().unwrap_or(&host_lower);
+
+    if let Some(c2) = matches_known_c2(host_clean) {
+        return Some(c2.to_string());
+    }
+
+    for c2 in custom_list {
+        let c2_clean = c2.trim().to_lowercase();
+        if !c2_clean.is_empty() && (host_clean == c2_clean || host_clean.ends_with(&format!(".{}", c2_clean))) {
+            return Some(c2_clean);
+        }
+    }
+    None
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -141,5 +159,16 @@ mod tests {
         assert_eq!(matches_known_c2("sub.data.webwatcherdata.com:443"), Some("webwatcherdata.com"));
         assert_eq!(matches_known_c2("google.com"), None);
         assert_eq!(matches_known_c2("microsoft.com"), None);
+
+        let custom = vec!["malicious-tracker.org".to_string()];
+        assert_eq!(
+            matches_c2_with_custom("api.malicious-tracker.org:8443", &custom),
+            Some("malicious-tracker.org".to_string())
+        );
+        assert_eq!(
+            matches_c2_with_custom("flexispy.com", &custom),
+            Some("flexispy.com".to_string())
+        );
+        assert_eq!(matches_c2_with_custom("safe.org", &custom), None);
     }
 }

@@ -4,11 +4,12 @@
 
 [![CI](https://github.com/jamixm4-crypto/sentinel/actions/workflows/ci.yml/badge.svg)](https://github.com/jamixm4-crypto/sentinel/actions/workflows/ci.yml)
 [![GitHub Release](https://img.shields.io/github/v/release/jamixm4-crypto/sentinel?color=green)](https://github.com/jamixm4-crypto/sentinel/releases)
+[![Crates.io](https://img.shields.io/crates/v/sentinel-cli.svg?color=blue)](https://crates.io/crates/sentinel-cli)
 [![Code License](https://img.shields.io/badge/Code-Apache--2.0-blue.svg)](LICENSE)
 [![Rules License](https://img.shields.io/badge/Rules-CC--BY--4.0-orange.svg)](LICENSE-CC-BY)
 [![Zero Telemetry](https://img.shields.io/badge/Telemetry-Zero%20(100%25%20Offline)-brightgreen.svg)](#security-principles)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](#supported-platforms)
-[![Rust](https://img.shields.io/badge/Rust-1.78%2B%20stable-red.svg)](https://www.rust-lang.org)
+[![Rust](https://img.shields.io/badge/Rust-1.80%2B%20stable-red.svg)](https://www.rust-lang.org)
 
 **Sentinel** is an open-source, offline-first defensive security scanner designed to detect covert surveillance software: keyloggers, commercial stalkerware, remote access trojans (RATs), employee monitoring agents, corporate EDR/MDM sensors, and process watchdogs.
 
@@ -56,31 +57,71 @@ curl -fsSL https://raw.githubusercontent.com/jamixm4-crypto/sentinel/main/instal
 ## Quick Usage
 
 ```bash
-# 1. Standard scan (generates terminal summary + standalone offline HTML report):
+# 1. Standard scan (interactive spinner + terminal summary + offline HTML report):
 sentinel scan
 
-# 2. Personal Safety Mode (in-memory terminal output only; no files saved to local disk):
+# 2. Quiet mode (minimal terminal output, suppresses spinners and banners):
+sentinel scan -q
+
+# 3. Verbose mode (displays collector execution time, evidence count, and privilege warnings):
+sentinel scan -v
+
+# 4. Personal Safety Mode (in-memory execution; zero report files saved to disk):
 sentinel scan --personal-safety-mode
 
-# 3. Forensic Mode (inspect an unmounted disk image or directory without live execution):
+# 5. Forensic Offline Mode (audit an unmounted disk image or directory):
 sentinel scan --scan-path /mnt/target_image
 
-# 4. SIEM / Pipeline Mode (streams findings as single-line NDJSON to stdout):
+# 6. SIEM & Pipeline Export (streams findings as NDJSON or Elastic Common Schema ECS):
+sentinel scan --format ecs
 sentinel scan --format ndjson
 
-# 5. Interface language selection (Russian):
-sentinel scan --lang ru
+# 7. Threat intelligence walkthrough & incident response triage guidance:
+sentinel explain STK-WIN-0042
+sentinel explain stalkerware_c2_network_beacon
+
+# 8. Offline rules & C2 domain feed updates:
+sentinel rules update --from /path/to/custom_rules/
+sentinel rules update --from /path/to/c2_domains.txt
 ```
 
 ---
 
-## Architecture & Detection Engines
+## Terminal Output Preview
+
+### Live Console Summary Example
+
+```text
+  🛡️ Sentinel Defensive Audit Summary
+  Verdict: SURVEILLANCE LIKELY [1 High-Risk Stalkerware Finding]
+  Platform: Windows 11 Pro (x86_64) | Duration: 1.48s | Inspected Processes: 242
+
+  [CRITICAL] Stalkerware C2 Communication (api.flexispy.com)
+  • Category: Network Activity & MITM | Confidence: 100% (High)
+  • Description: Active socket matched known commercial stalkerware C2 endpoint.
+  • Action Policy: SafeAuto (Firewall/hosts block available)
+  • Remediation: sentinel quarantine C2-api-flexispy-com --execute
+
+  [HIGH] Spyrix Personal Monitor & Keylogger
+  • Category: Keyboard Capture | Confidence: 95% (High)
+  • Description: Identified active process 'spx.exe' and persistent service 'spxsvc'.
+  • Action Policy: SafeAuto (Automated vault quarantine available)
+  • Dry-Run: sentinel quarantine STK-WIN-0042
+
+  HTML report generated: C:\Users\user\sentinel-report-20261005_120000.html
+```
+
+---
+
+## Architecture & Modular Crates
+
+For complete architecture diagrams and sequence charts, see **[ARCHITECTURE.md](ARCHITECTURE.md)**.
 
 ```
-                               ┌────────────────────────────────┐
-                               │       Sentinel Scanner         │
-                               └───────────────┬────────────────┘
-                                               │
+                                ┌────────────────────────────────┐
+                                │       sentinel-cli (CLI)       │
+                                └───────────────┬────────────────┘
+                                                │
              ┌───────────────────┬─────────────┴───────┬───────────────────┐
              ▼                   ▼                     ▼                   ▼
      ┌──────────────┐    ┌──────────────┐      ┌──────────────┐    ┌──────────────┐
@@ -98,19 +139,23 @@ sentinel scan --lang ru
                  ┌───────────────┴───────────────┐
                  ▼                               ▼
        ┌───────────────────┐           ┌───────────────────┐
-       │   HTML/JSON/NDJSON│           │ Reversible Vault  │
-       │    Audit Report   │           │ (Dry-Run / Undo)  │
+       │   sentinel-report │           │ sentinel-removal  │
+       │ HTML/JSON/NDJSON/ │           │ Reversible Vault  │
+       │ Elastic ECS v8.11 │           │ (Dry-Run / Undo)  │
        └───────────────────┘           └───────────────────┘
 ```
 
-- **Process Masquerading Detection (MITRE ATT&CK T1036.005)**:
-  Flags processes mimicking system components (`svchost.exe`, `csrss.exe`, `lsass.exe`, `services.exe`) running out of user profiles (`%APPDATA%`, `%TEMP%`, `C:\ProgramData`).
-- **75+ Embedded YAML Signatures & 280+ Stalkerware C2 Domains**:
-  Inspects active sockets and DNS client cache records (`ipconfig /displaydns`) against validated threat intelligence feeds (Coalition Against Stalkerware, AssoEchap, TinyCheck).
-- **Multi-Modal Rule Correlation**:
-  Requires corroborating evidence (`condition.min_matches: 2`) combining process execution, registry hooks, and network activity to eliminate single-point false alarms.
-- **Deep Benign Allowlist**:
-  Suppresses false positives for legitimate streaming software (OBS Studio), gaming overlays (Discord, Steam), accessibility tools (NVDA, Narrator), and developer IDEs.
+Sentinel is engineered as a collection of modular Rust crates publishable to crates.io:
+
+| Crate | Purpose | Key Responsibilities |
+|---|---|---|
+| [`sentinel-core`](crates/core/) | Core Domain Types | Platform detection, evidence representations, finding models, verdicts. |
+| [`sentinel-collectors`](crates/collectors/) | Evidence Gathering | Cross-platform process enumeration, registry ASEPs, consent stores, socket auditing. |
+| [`sentinel-rules`](crates/rules/) | Declarative Rules Engine | 75+ embedded YAML signatures, 280+ C2 domains, regex matcher. |
+| [`sentinel-scoring`](crates/scoring/) | Multi-Factor Correlation | Process masquerading detection, multi-modal corroboration, user allowlisting. |
+| [`sentinel-removal`](crates/removal/) | Remediation & Vault | Encrypted quarantine, SHA-256 state tracking, dry-run safety, clean restore. |
+| [`sentinel-report`](crates/report/) | Multi-Format Exporters | Self-contained HTML report, raw JSON, NDJSON, and Elastic Common Schema (ECS). |
+| [`sentinel-cli`](crates/cli/) | User Application | Command-line interface with interactive progress spinner, safety checks, explain. |
 
 ---
 
@@ -198,8 +243,32 @@ sentinel allow remove "my_admin_tool.exe"
 
 ---
 
+## CI & Security Assurance
+
+All pull requests and release tags undergo rigorous automated quality and supply-chain audits across Windows, Linux, and macOS GitHub Actions runners:
+
+- **Formatting Standards**: `cargo fmt --check` ensures consistent code layout.
+- **Strict Linting**: `cargo clippy --all-targets --all-features -- -D warnings` forbids all compiler and style warnings.
+- **Vulnerability Auditing**: `cargo audit` verifies zero known CVEs or supply-chain advisories across all Cargo dependencies.
+- **License & Dependency Health**: `cargo deny check` prevents licensing conflicts and unapproved dependencies.
+- **100% Deterministic Offline Testing**: Automated suite verifies zero outbound sockets and validates rule precision against synthetic telemetry.
+
+---
+
+## Contributing & Community
+
+Contributions of new detection rules, threat feeds, or bug fixes are welcome!
+
+- [Pull Request Template](.github/PULL_REQUEST_TEMPLATE.md)
+- [Bug Report Template](.github/ISSUE_TEMPLATE/bug_report.yml)
+- [Contributing Guide](CONTRIBUTING.md)
+- [Threat Intelligence Feed Guidelines](docs/threat-intel-curation.md)
+
+---
+
 ## Documentation Links
 
+- [Root Architecture Specification](ARCHITECTURE.md)
 - [Threat Model & Security Scope](docs/threat-model.md)
 - [Architecture & Correlation Engine](docs/architecture.md)
 - [Reproducible Builds & Verification](docs/reproducible-builds.md)

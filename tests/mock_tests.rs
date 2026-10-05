@@ -336,3 +336,75 @@ fn test_cmdline_regex_matching_accuracy() {
     assert_eq!(matches2.len(), 1, "Cmdline with regex match must match");
 }
 
+#[test]
+fn test_custom_c2_domain_matching() {
+    let rules = get_embedded_rules();
+    let scoring = ScoringEngine::new(&rules, Lang::En)
+        .with_custom_c2(vec!["evil-stalkerware-tracker.org".to_string()]);
+
+    let evidence = vec![
+        Evidence::new(
+            EvidenceType::NetworkSocketListener,
+            "NetworkCollector",
+            "Active TCP connection to evil-stalkerware-tracker.org:443",
+            "Socket: 192.168.1.10:54321 -> evil-stalkerware-tracker.org:443",
+        )
+        .with_data(EvidenceData::Network {
+            protocol: "TCP".to_string(),
+            local_address: "192.168.1.10:54321".to_string(),
+            remote_address: Some("evil-stalkerware-tracker.org:443".to_string()),
+            pid: Some(3333),
+        }),
+    ];
+
+    let (verdict, findings) = scoring.evaluate(&evidence);
+    assert_eq!(verdict, Verdict::SurveillanceLikely);
+    assert!(findings.iter().any(|f| f.rule_id == "stalkerware_c2_network_beacon"));
+    assert!(findings.iter().any(|f| f.name.contains("evil-stalkerware-tracker.org")));
+}
+
+#[test]
+fn test_ecs_ndjson_export() {
+    use sentinel_core::PlatformInfo;
+    use std::time::Duration;
+
+    let rules = get_embedded_rules();
+    let scoring = ScoringEngine::new(&rules, Lang::En);
+    let evidence = vec![
+        Evidence::new(
+            EvidenceType::ActiveProcess,
+            "MockCollector",
+            "Active process: spyrix.exe",
+            "Path: C:\\Program Files\\Spyrix\\spyrix.exe",
+        )
+        .with_data(EvidenceData::Process {
+            pid: 1234,
+            name: "spyrix.exe".to_string(),
+            exe_path: Some("C:\\Program Files\\Spyrix\\spyrix.exe".to_string()),
+            command_line: None,
+        }),
+    ];
+
+    let (verdict, findings) = scoring.evaluate(&evidence);
+    let scan_result = sentinel_core::ScanResult {
+        verdict,
+        findings,
+        platform: PlatformInfo::current(),
+        scan_duration: Duration::from_millis(50),
+        timestamp: "2026-10-05T08:00:00Z".to_string(),
+        skipped_checks: vec![],
+        total_inspected_processes: 1,
+        total_inspected_persistence: 0,
+    };
+
+    let ecs_events = sentinel_report::generate_ecs_events(&scan_result);
+    assert!(!ecs_events.is_empty(), "Should generate at least 1 ECS event");
+    let first = &ecs_events[0];
+    assert_eq!(first["ecs"]["version"], "8.11.0");
+    assert_eq!(first["event"]["kind"], "alert");
+    assert_eq!(first["threat"]["framework"], "MITRE ATT&CK");
+
+    let ndjson = sentinel_report::export_ecs_ndjson(&scan_result);
+    assert!(ndjson.contains(r#""framework":"MITRE ATT&CK""#));
+}
+

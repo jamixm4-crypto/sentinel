@@ -11,6 +11,7 @@ pub struct ScoringEngine<'a> {
     rules: &'a [Rule],
     lang: Lang,
     user_allowlist: std::collections::HashSet<String>,
+    custom_c2: Vec<String>,
 }
 
 impl<'a> ScoringEngine<'a> {
@@ -19,12 +20,19 @@ impl<'a> ScoringEngine<'a> {
             rules,
             lang,
             user_allowlist: std::collections::HashSet::new(),
+            custom_c2: Vec::new(),
         }
     }
 
     /// Attach a user-defined allowlist of rule IDs or binary names to suppress
     pub fn with_allowlist(mut self, allowlist: std::collections::HashSet<String>) -> Self {
         self.user_allowlist = allowlist.into_iter().map(|s| s.to_lowercase()).collect();
+        self
+    }
+
+    /// Attach offline or custom C2 domains from external threat feeds
+    pub fn with_custom_c2(mut self, custom_c2: Vec<String>) -> Self {
+        self.custom_c2 = custom_c2;
         self
     }
 
@@ -197,10 +205,10 @@ impl<'a> ScoringEngine<'a> {
         for ev in all_evidence {
             let matched_c2 = match &ev.data {
                 Some(sentinel_core::EvidenceData::Network { remote_address: Some(remote), .. }) => {
-                    sentinel_rules::matches_known_c2(remote)
+                    sentinel_rules::matches_c2_with_custom(remote, &self.custom_c2)
                 }
                 Some(sentinel_core::EvidenceData::Generic { key, value }) if key == "DnsCacheRecord" => {
-                    sentinel_rules::matches_known_c2(value)
+                    sentinel_rules::matches_c2_with_custom(value, &self.custom_c2)
                 }
                 _ => None,
             };
@@ -209,7 +217,7 @@ impl<'a> ScoringEngine<'a> {
                 if self.user_allowlist.contains(&c2.to_lowercase()) {
                     continue;
                 }
-                if seen_c2.insert(c2) {
+                if seen_c2.insert(c2.clone()) {
                     has_high_severity = true;
                     let what_is_it = match self.lang {
                         Lang::Ru => format!("Сетевая связь с сервером управления ({}) сталкерского ПО", c2),

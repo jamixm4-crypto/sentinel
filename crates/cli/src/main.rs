@@ -41,9 +41,17 @@ enum Commands {
         #[arg(long, default_value_t = true)]
         json: bool,
 
-        /// Output format: terminal | json | ndjson | html
+        /// Output format: terminal | json | ndjson | ecs | html
         #[arg(long, default_value = "terminal")]
         format: String,
+
+        /// Suppress non-essential output, spinners, and headers
+        #[arg(short, long)]
+        quiet: bool,
+
+        /// Display verbose diagnostic collection details and collector traces
+        #[arg(short, long)]
+        verbose: bool,
 
         /// Forensic mode: scan an offline directory or mounted disk image instead of live system
         #[arg(long)]
@@ -179,6 +187,8 @@ fn main() {
             out,
             json,
             format,
+            quiet,
+            verbose,
             scan_path,
             rules_dir,
             allowlist,
@@ -193,6 +203,8 @@ fn main() {
                 &out,
                 json,
                 &format,
+                quiet,
+                verbose,
                 scan_path.as_deref(),
                 rules_dir.as_deref(),
                 allowlist.as_deref(),
@@ -284,8 +296,9 @@ fn main() {
             }
             RulesCommands::Update { from } => {
                 if let Some(src) = from {
-                    println!("Importing rules from '{}'...", src.display());
-                    let target_dir = get_sentinel_data_dir().join("rules");
+                    println!("Importing rules / threat indicators from '{}'...", src.display());
+                    let sentinel_dir = get_sentinel_data_dir();
+                    let target_dir = sentinel_dir.join("rules");
                     if let Err(e) = std::fs::create_dir_all(&target_dir) {
                         eprintln!("{} Failed to create rules directory: {}", "✖".red(), e);
                         return;
@@ -301,23 +314,40 @@ fn main() {
                                         let _ = std::fs::copy(&p, dest);
                                         count += 1;
                                     }
+                                } else if p.file_name().map_or(false, |n| n == "c2_domains.txt") {
+                                    let dest = sentinel_dir.join("c2_domains.txt");
+                                    let _ = std::fs::copy(&p, dest);
+                                    println!("{} Imported offline C2 domains list into '{}'.", "✔".green(), sentinel_dir.join("c2_domains.txt").display());
                                 }
                             }
                         }
                         println!("{} Successfully imported {} rules into '{}'.", "✔".green(), count, target_dir.display());
                     } else if src.is_file() {
-                        if let Some(name) = src.file_name() {
-                            let dest = target_dir.join(name);
-                            if let Err(e) = std::fs::copy(&src, dest) {
-                                eprintln!("{} Failed to copy rule file: {}", "✖".red(), e);
+                        let ext = src.extension().and_then(|s| s.to_str()).unwrap_or("");
+                        if ext == "txt" {
+                            let dest = sentinel_dir.join("c2_domains.txt");
+                            if let Err(e) = std::fs::copy(&src, &dest) {
+                                eprintln!("{} Failed to copy C2 domains file: {}", "✖".red(), e);
                             } else {
-                                println!("{} Successfully imported rule into '{}'.", "✔".green(), target_dir.display());
+                                println!("{} Successfully updated offline C2 domain feed in '{}'.", "✔".green(), dest.display());
                             }
+                        } else if ext == "yml" || ext == "yaml" {
+                            if let Some(name) = src.file_name() {
+                                let dest = target_dir.join(name);
+                                if let Err(e) = std::fs::copy(&src, dest) {
+                                    eprintln!("{} Failed to copy rule file: {}", "✖".red(), e);
+                                } else {
+                                    println!("{} Successfully imported rule into '{}'.", "✔".green(), target_dir.display());
+                                }
+                            }
+                        } else {
+                            eprintln!("{} Unrecognized file format. Expected .yml, .yaml, or .txt.", "✖".red());
                         }
                     }
                 } else {
-                    println!("Rule set is up to date. To import external rules offline, run:");
-                    println!("  {}", "sentinel rules update --from <path/to/rules>".cyan());
+                    println!("Rule set is up to date (75+ embedded rules, 280+ C2 domains).");
+                    println!("To import external rules or C2 domain feeds offline, run:");
+                    println!("  {}", "sentinel rules update --from <path/to/rules_or_c2.txt>".cyan());
                 }
             }
         },
@@ -329,6 +359,8 @@ fn execute_scan(
     out_dir: &Path,
     emit_json: bool,
     format_opt: &str,
+    quiet: bool,
+    verbose: bool,
     scan_path: Option<&Path>,
     rules_dir: Option<&Path>,
     allowlist_path: Option<&Path>,
@@ -339,11 +371,26 @@ fn execute_scan(
     let start_time = Instant::now();
     let rules = load_all_rules(rules_dir);
 
+    let spinner = if !quiet && format_opt == "terminal" {
+        let pb = indicatif::ProgressBar::new_spinner();
+        pb.set_style(
+            indicatif::ProgressStyle::default_spinner()
+                .tick_chars("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏ ")
+                .template("{spinner:.cyan} {msg}")
+                .unwrap_or_else(|_| indicatif::ProgressStyle::default_spinner()),
+        );
+        pb.set_message("Conducting surveillance audit across processes, persistence, and network hooks...");
+        pb.enable_steady_tick(std::time::Duration::from_millis(80));
+        Some(pb)
+    } else {
+        None
+    };
+
     // Collect evidence (Forensic offline scan OR live OS collectors)
     let (all_evidence, skipped) = if let Some(target) = scan_path {
         (run_offline_disk_scan(target, &rules), Vec::new())
     } else {
-        if format_opt != "ndjson" {
+        if !quiet && format_opt == "terminal" && spinner.is_none() {
             println!("  {} Starting Sentinel defensive audit...", "🔍".cyan());
         }
         let platform = PlatformInfo::current();
@@ -371,9 +418,16 @@ fn execute_scan(
         load_user_allowlist_entries()
     };
 
-    let scoring = ScoringEngine::new(&rules, lang).with_allowlist(user_allowlist);
+    let custom_c2 = load_custom_c2_domains();
+    let scoring = ScoringEngine::new(&rules, lang)
+        .with_allowlist(user_allowlist)
+        .with_custom_c2(custom_c2);
     let (verdict, findings) = scoring.evaluate(&all_evidence);
     let duration = start_time.elapsed();
+
+    if let Some(pb) = spinner {
+        pb.finish_and_clear();
+    }
 
     let result = ScanResult {
         verdict,
@@ -381,7 +435,7 @@ fn execute_scan(
         platform: PlatformInfo::current(),
         scan_duration: duration,
         timestamp: Utc::now().to_rfc3339(),
-        skipped_checks: skipped,
+        skipped_checks: skipped.clone(),
         total_inspected_processes: all_evidence
             .iter()
             .filter(|e| matches!(e.evidence_type, sentinel_core::EvidenceType::ActiveProcess))
@@ -391,6 +445,26 @@ fn execute_scan(
             .filter(|e| !matches!(e.evidence_type, sentinel_core::EvidenceType::ActiveProcess))
             .count(),
     };
+
+    if verbose {
+        println!("  {} Diagnostic scan metrics:", "ℹ️".blue());
+        println!("    • Evidence records collected: {}", all_evidence.len());
+        println!("    • Detection rules evaluated: {}", rules.len());
+        println!("    • Scan execution time: {:?}", duration);
+        if !skipped.is_empty() {
+            println!("    • Skipped checks (insufficient privilege):");
+            for sc in &skipped {
+                println!("      - {}: {}", sc.collector, sc.description);
+            }
+        }
+        println!();
+    }
+
+    // ECS JSON output for Elastic / SIEM ingestion
+    if format_opt == "ecs" {
+        print!("{}", sentinel_report::export_ecs_ndjson(&result));
+        return;
+    }
 
     // NDJSON output for SIEM ingestion (Elasticsearch, Splunk, Wazuh)
     if format_opt == "ndjson" {
@@ -402,8 +476,23 @@ fn execute_scan(
         return;
     }
 
+    if format_opt == "json" && stdout_only {
+        if let Ok(s) = serde_json::to_string_pretty(&result) {
+            println!("{}", s);
+        }
+        return;
+    }
+
     // Terminal Summary
-    print_terminal_summary(&result, lang);
+    if quiet {
+        if result.findings.is_empty() {
+            println!("✔ Clean: No stalkerware or surveillance indicators detected.");
+        } else {
+            print_terminal_summary(&result, lang);
+        }
+    } else {
+        print_terminal_summary(&result, lang);
+    }
 
     // Personal Safety Notice & Residual Traces Warning
     if personal_safety_mode {
@@ -670,30 +759,166 @@ fn execute_remove(
 }
 
 fn execute_explain(id: &str, lang: Lang) {
+    let id_lower = id.trim().to_lowercase();
+
+    // Check if explaining C2 network beaconing
+    if id_lower == "stalkerware_c2_network_beacon" || id_lower.starts_with("c2-") || id_lower == "c2" {
+        println!("\n  {} {}", "🛡️".cyan(), "THREAT PROFILE: Stalkerware Command-and-Control (C2) Infrastructure".bold());
+        println!("  Rule ID: stalkerware_c2_network_beacon | Category: Network Activity | Severity: Critical");
+        println!("  Confidence: 1.0 (High) | Policy: SafeAuto (Domain blocking / socket termination)");
+        println!("\n  Threat Actor Tactics & MITRE ATT&CK Mapping:");
+        println!("    • MITRE Tactic: TA0011 (Command and Control)");
+        println!("    • MITRE Technique: T1071 (Application Layer Protocol: Web/DNS Beaconing)");
+        println!("    • MITRE Technique: T1041 (Exfiltration Over C2 Channel)");
+        println!("    • Reference: https://attack.mitre.org/tactics/TA0011/");
+        println!("\n  Real-World Incident Context:");
+        println!("    Stalkerware applications exfiltrate keystrokes, GPS coordinates, ambient microphone audio,");
+        println!("    and screen captures to remote C2 endpoints controlled by commercial stalkerware vendors.");
+        println!("    Sentinel cross-references active connections and DNS cache entries against 280+ curated C2 domains");
+        println!("    compiled from Coalition Against Stalkerware, AssoEchap, and Citizen Lab feeds.");
+        println!("\n  Incident Triage & Response Protocol:");
+        println!("    1. DO NOT immediately terminate or wipe the host if physical safety is at risk.");
+        println!("    2. Export forensic report (sentinel scan --stdout-only or save report to external USB).");
+        println!("    3. Network Containment: Block the destination domain at router or hosts file ('0.0.0.0 <domain>').");
+        println!("    4. Consult trusted support organizations safely:");
+        println!("       - Coalition Against Stalkerware: https://stopstalkerware.org");
+        println!("       - Global Domestic Violence Helplines: https://lila.help");
+        println!();
+        return;
+    }
+
     let rules = load_all_rules(None);
-    if let Some(rule) = rules.iter().find(|r| r.id == id || r.name.to_lowercase().contains(&id.to_lowercase())) {
-        println!("\n  {} [{}] {}", "🛡️".cyan(), rule.id, rule.name.bold());
+    if let Some(rule) = rules.iter().find(|r| r.id.to_lowercase() == id_lower || r.name.to_lowercase().contains(&id_lower)) {
+        let (tactic_id, tactic_name, tech_id, tech_name, tech_url) = match rule.category {
+            sentinel_core::Category::KeyboardCapture => (
+                "TA0009",
+                "Collection",
+                "T1056.001",
+                "Keylogging / Input Capture",
+                "https://attack.mitre.org/techniques/T1056/001/",
+            ),
+            sentinel_core::Category::ScreenCapture => (
+                "TA0009",
+                "Collection",
+                "T1113",
+                "Screen Capture",
+                "https://attack.mitre.org/techniques/T1113/",
+            ),
+            sentinel_core::Category::RemoteAccess => (
+                "TA0011",
+                "Command and Control",
+                "T1219",
+                "Remote Access Software",
+                "https://attack.mitre.org/techniques/T1219/",
+            ),
+            sentinel_core::Category::OrganizationManaged => (
+                "TA0007",
+                "Discovery",
+                "T1082",
+                "System Information Discovery",
+                "https://attack.mitre.org/techniques/T1082/",
+            ),
+            sentinel_core::Category::SuspiciousPersistence => (
+                "TA0003",
+                "Persistence",
+                "T1547.001",
+                "Registry Run Keys / Startup Folder",
+                "https://attack.mitre.org/techniques/T1547/001/",
+            ),
+            sentinel_core::Category::NetworkActivity => (
+                "TA0011",
+                "Command and Control",
+                "T1071.001",
+                "Web Protocols / C2 Beaconing",
+                "https://attack.mitre.org/techniques/T1071/001/",
+            ),
+            sentinel_core::Category::ProcessWatcher => (
+                "TA0005",
+                "Defense Evasion",
+                "T1562.001",
+                "Disable or Modify Tools",
+                "https://attack.mitre.org/techniques/T1562/001/",
+            ),
+        };
+
+        println!("\n  {} [{}] {}", "🛡️".cyan(), rule.id.bold(), rule.name.bold());
         println!("  Vendor: {}", rule.vendor.as_deref().unwrap_or("Unknown"));
         println!("  Category: {:?} | Severity: {:?}", rule.category, rule.severity);
-        println!("  Removal Policy: {:?}", rule.removal_policy);
-        println!("\n  What is this:");
-        println!("    {}", rule.description);
+        println!("  Removal Policy: {:?} | Legitimate Dual-Use: {}", rule.removal_policy, rule.is_legitimate_use_likely);
+
+        println!("\n  MITRE ATT&CK Alignment:");
+        println!("    • Tactic: {} ({})", tactic_name, tactic_id);
+        println!("    • Technique: {} ({})", tech_name, tech_id);
+        println!("    • Reference: {}", tech_url);
+
+        println!("\n  Threat Description & Mechanism:");
+        for line in rule.description.lines() {
+            println!("    {}", line);
+        }
+
+        if let Some(warning) = &rule.safety_warning {
+            println!("\n  {} Safety Warning:", "⚠".yellow());
+            println!("    {}", warning);
+        }
+
+        println!("\n  Incident Triage & Response Guidance:");
+        match rule.removal_policy {
+            sentinel_core::RemovalPolicy::DoNotRemove => {
+                println!("    • [ORGANIZATION AGENT] Do NOT attempt removal on corporate-owned devices.");
+                println!("    • Tampering triggers alerts in enterprise SOC/SIEM and may violate company acceptable use policy.");
+                println!("    • If this is a personal unmanaged machine, consult your IT administrator.");
+            }
+            sentinel_core::RemovalPolicy::SafeAuto => {
+                println!("    • [STALKERWARE / ADWARE] Safe for automated quarantine or removal.");
+                println!("    • In personal safety / domestic violence contexts, terminating this software notifies");
+                println!("      the perpetrator that their access has been revoked. Ensure personal safety first.");
+                println!("    • Safe command: sentinel quarantine {} --execute", rule.id);
+            }
+            sentinel_core::RemovalPolicy::ManualReview => {
+                println!("    • [DUAL-USE / COMPLEX TOOL] Software has valid administrative or productivity use.");
+                println!("    • Verify whether this software was intentionally installed by the authorized device owner.");
+                println!("    • If unauthorized, follow the manual removal instructions below.");
+            }
+        }
 
         if let Some(steps) = &rule.removal {
-            if let Some(guide) = match lang {
-                Lang::Ru => steps.manual_steps_windows.as_ref(),
-                Lang::En => steps.manual_steps_windows.as_ref(),
-            } {
-                println!("\n  Manual Removal Steps (Windows):");
-                for line in guide.lines() {
+            let guide = match lang {
+                Lang::Ru => steps.manual_steps_windows.as_ref().or(steps.manual_steps_linux.as_ref()),
+                Lang::En => steps.manual_steps_windows.as_ref().or(steps.manual_steps_linux.as_ref()),
+            };
+            if let Some(g) = guide {
+                println!("\n  Manual Remediation Procedure:");
+                for line in g.lines() {
                     println!("    {}", line);
                 }
             }
         }
+
+        if !rule.references.is_empty() {
+            println!("\n  Threat Intelligence & References:");
+            for r in &rule.references {
+                println!("    • {}", r);
+            }
+        }
         println!();
     } else {
-        eprintln!("Rule '{}' not found.", id);
+        eprintln!("{} Rule or finding identifier '{}' not found in database.", "✖".red(), id);
+        println!("Run 'sentinel rules list' to inspect available rule signatures.");
     }
+}
+
+fn load_custom_c2_domains() -> Vec<String> {
+    let path = get_sentinel_data_dir().join("c2_domains.txt");
+    if path.exists() {
+        if let Ok(content) = std::fs::read_to_string(&path) {
+            return content
+                .lines()
+                .map(|line| line.trim().to_lowercase())
+                .filter(|line| !line.is_empty() && !line.starts_with('#'))
+                .collect();
+        }
+    }
+    Vec::new()
 }
 
 // User allowlist helpers

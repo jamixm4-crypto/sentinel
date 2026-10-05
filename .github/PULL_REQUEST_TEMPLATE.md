@@ -1,19 +1,16 @@
-## Summary of Changes
+## Description
+Please describe your changes and the rationale behind them.
 
-Describe the changes proposed in this Pull Request and their motivation.
+## Type of Change
+- [ ] New detection rule (YAML)
+- [ ] New evidence collector / forensic capability
+- [ ] Bug fix / False positive suppression
+- [ ] Performance optimization
+- [ ] Documentation improvement
 
-## Category of Contribution
-- [ ] New detection rule (`rules/`)
-- [ ] New evidence collector (`crates/collectors/`)
-- [ ] Scoring or allowlist improvement (`crates/scoring/`)
-- [ ] Safe removal & quarantine feature (`crates/removal/`)
-- [ ] Report enhancement (`crates/report/`)
-- [ ] Documentation update
-
-## Checklist
-- [ ] Read and followed [CONTRIBUTING.md](CONTRIBUTING.md)
-- [ ] Verified clean-room design (no GPL-3.0 or proprietary code copied)
-- [ ] Formatted code with `cargo fmt --all`
-- [ ] Passed `cargo clippy --all-targets --all-features`
-- [ ] Passed `cargo test --workspace`
-- [ ] Validated any new rules against `rules/schema.json`
+## Verification Checklist
+- [ ] `cargo test --workspace` passes cleanly
+- [ ] `cargo clippy --all-targets --all-features -- -D warnings` reports zero warnings
+- [ ] `cargo fmt --all -- --check` complies with formatting standards
+- [ ] If adding rules: verified with `sentinel rules validate <path>`
+- [ ] Zero telemetry verified: no external HTTP requests or network calls added

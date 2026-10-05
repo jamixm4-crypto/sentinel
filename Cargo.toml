@@ -45,6 +45,7 @@ chrono = { version = "0.4", features = ["serde"] }
 # CLI and Output
 clap = { version = "4.5", features = ["derive", "cargo"] }
 colored = "2.1"
+indicatif = "0.17"
 
 # Logging and Utils
 tracing = "0.1"
