@@ -144,7 +144,30 @@ fn parse_and_record_manifest(
         Err(_) => return,
     };
 
-    let name = v["name"].as_str().unwrap_or("Unknown Extension").to_string();
+    let mut name = v["name"].as_str().unwrap_or("Unknown Extension").to_string();
+    if name.starts_with("__MSG_") && name.ends_with("__") && name.len() > 8 {
+        let msg_key = &name[6..name.len() - 2];
+        if let Some(parent) = manifest_path.parent() {
+            let locales_dir = parent.join("_locales");
+            let mut locales = Vec::new();
+            if let Some(dl) = v["default_locale"].as_str() {
+                locales.push(dl.to_string());
+            }
+            locales.push("en".to_string());
+            locales.push("en_US".to_string());
+            for loc in locales {
+                let msg_path = locales_dir.join(&loc).join("messages.json");
+                if let Ok(msg_raw) = fs::read_to_string(&msg_path) {
+                    if let Ok(msg_val) = serde_json::from_str::<Value>(&msg_raw) {
+                        if let Some(localized) = msg_val[msg_key]["message"].as_str() {
+                            name = localized.to_string();
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
     let version = v["version"].as_str().unwrap_or("0.0.0").to_string();
 
     let mut permissions = Vec::new();

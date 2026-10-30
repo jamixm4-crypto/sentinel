@@ -19,6 +19,9 @@ detection:
     - "C:\\Program Files\\Wolfeye\\"
     - "%AppData%\\Wolfeye\\"
 
+condition:
+  min_matches: 2
+
 removal:
   processes_to_kill:
     - "wolfeye.exe"

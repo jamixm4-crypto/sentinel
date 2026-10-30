@@ -22,6 +22,9 @@ detection:
   network_domains:
     - "thetruthspy.com"
 
+condition:
+  min_matches: 2
+
 removal:
   processes_to_kill:
     - "dservice.exe"

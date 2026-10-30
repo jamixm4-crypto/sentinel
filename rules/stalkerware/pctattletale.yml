@@ -23,6 +23,9 @@ detection:
     - hive: "HKLM"
       path: "SOFTWARE\\pcTattletale"
 
+condition:
+  min_matches: 2
+
 removal:
   services_to_stop:
     - "pctattletale service"

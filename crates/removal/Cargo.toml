@@ -17,3 +17,7 @@ walkdir = { workspace = true }
 sha2 = { workspace = true }
 hex = { workspace = true }
 dirs = { workspace = true }
+sysinfo = { workspace = true }
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.52"

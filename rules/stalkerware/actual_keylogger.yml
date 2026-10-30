@@ -24,6 +24,9 @@ detection:
   paths:
     - "C:\\Program Files (x86)\\Actual Keylogger\\"
 
+condition:
+  min_matches: 2
+
 removal:
   processes_to_kill:
     - "ak.exe"

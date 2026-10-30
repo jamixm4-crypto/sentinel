@@ -18,7 +18,6 @@ detection:
   processes:
     - name: "tmagent.exe"
     - name: "tmhost.exe"
-    - name: "svc.exe"
     - name: "teramind-agent"
   services:
     - name: "tsvchst"

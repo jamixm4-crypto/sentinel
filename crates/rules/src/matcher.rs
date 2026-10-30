@@ -13,6 +13,13 @@ pub struct RuleMatcher<'a> {
     rules: &'a [Rule],
 }
 
+fn extract_binary_filename(path: &str) -> Option<&str> {
+    let clean = path.trim().trim_matches('"');
+    let exe_token = clean.split_whitespace().next()?;
+    let filename = exe_token.split(['\\', '/']).last()?;
+    Some(filename)
+}
+
 impl<'a> RuleMatcher<'a> {
     pub fn new(rules: &'a [Rule]) -> Self {
         Self { rules }
@@ -64,7 +71,13 @@ impl<'a> RuleMatcher<'a> {
                 for proc in &rule.detection.processes {
                     let proc_lower = proc.name.to_lowercase();
                     let proc_trimmed = proc_lower.trim_end_matches(".exe");
-                    if name_lower == proc_lower || name_trimmed == proc_trimmed {
+                    let is_match = if proc_trimmed.len() <= 3 {
+                        name_lower == proc_lower
+                    } else {
+                        name_lower == proc_lower || name_trimmed == proc_trimmed
+                    };
+
+                    if is_match {
                         if let Some(regex_str) = &proc.cmdline_regex {
                             if let Ok(re) = regex::Regex::new(regex_str) {
                                 let cmd = command_line.as_deref().unwrap_or("");
@@ -106,7 +119,10 @@ impl<'a> RuleMatcher<'a> {
                 let disp_lower = display_name.as_deref().unwrap_or("").to_lowercase();
                 for s in &rule.detection.services {
                     let s_lower = s.name.to_lowercase();
-                    if name_lower == s_lower || name_lower.contains(&s_lower) || (!disp_lower.is_empty() && disp_lower.contains(&s_lower)) {
+                    let s_matches = name_lower == s_lower
+                        || disp_lower == s_lower
+                        || (s_lower.len() >= 6 && (name_lower.contains(&s_lower) || disp_lower.contains(&s_lower)));
+                    if s_matches {
                         return true;
                     }
                 }
@@ -114,11 +130,19 @@ impl<'a> RuleMatcher<'a> {
                 // Correlate service binary path with rule processes and paths
                 if let Some(bpath) = binary_path {
                     let bpath_lower = bpath.to_lowercase();
-                    for proc in &rule.detection.processes {
-                        let proc_lower = proc.name.to_lowercase();
-                        let proc_trimmed = proc_lower.trim_end_matches(".exe");
-                        if bpath_lower.contains(&proc_lower) || bpath_lower.contains(proc_trimmed) {
-                            return true;
+                    if let Some(exe_file) = extract_binary_filename(&bpath_lower) {
+                        let exe_trimmed = exe_file.trim_end_matches(".exe");
+                        for proc in &rule.detection.processes {
+                            let proc_lower = proc.name.to_lowercase();
+                            let proc_trimmed = proc_lower.trim_end_matches(".exe");
+                            let is_match = if proc_trimmed.len() <= 3 {
+                                exe_file == proc_lower
+                            } else {
+                                exe_file == proc_lower || exe_trimmed == proc_trimmed
+                            };
+                            if is_match {
+                                return true;
+                            }
                         }
                     }
                     for p in &rule.detection.paths {
@@ -162,17 +186,17 @@ impl<'a> RuleMatcher<'a> {
                 }
             }
             _ => {
-                // Generic string matching against description
+                // Only match unique binary filenames (>= 6 chars ending in .exe) or complete directory paths
                 let desc_lower = ev.description.to_lowercase();
                 for p in &rule.detection.processes {
                     let p_lower = p.name.to_lowercase();
-                    let p_trimmed = p_lower.trim_end_matches(".exe");
-                    if desc_lower.contains(&p_lower) || desc_lower.contains(p_trimmed) {
+                    if p_lower.len() >= 6 && p_lower.ends_with(".exe") && desc_lower.contains(&p_lower) {
                         return true;
                     }
                 }
                 for path in &rule.detection.paths {
-                    if desc_lower.contains(&path.to_lowercase()) {
+                    let p_lower = path.to_lowercase();
+                    if p_lower.len() >= 8 && desc_lower.contains(&p_lower) {
                         return true;
                     }
                 }

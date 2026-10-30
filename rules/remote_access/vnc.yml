@@ -32,6 +32,8 @@ removal:
   services_to_stop:
     - "uvnc_service"
     - "tvnserver"
+    - "vncserver"
   processes_to_kill:
     - "winvnc.exe"
     - "tvnserver.exe"
+    - "vncserver.exe"

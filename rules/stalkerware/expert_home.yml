@@ -27,6 +27,9 @@ detection:
     - hive: "HKCU"
       path: "Software\\Expert Home"
 
+condition:
+  min_matches: 2
+
 removal:
   manual_steps_windows: |
     Kill process eh.exe or spygo.exe and delete installation folder in Program Files.

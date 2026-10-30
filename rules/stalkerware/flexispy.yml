@@ -30,6 +30,9 @@ detection:
   network_domains:
     - "flexispy.com"
 
+condition:
+  min_matches: 2
+
 removal:
   services_to_stop:
     - "System Core"
