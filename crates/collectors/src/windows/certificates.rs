@@ -65,12 +65,16 @@ impl Collector for WindowsCertificatesCollector {
                             && (domain.contains("microsoft")
                                 || domain.contains("virustotal")
                                 || domain.contains("kaspersky")
-                                || domain.contains("avast"))
+                                || domain.contains("avast")
+                                || domain.contains("malwarebytes")
+                                || domain.contains("stopstalkerware")
+                                || domain.contains("eset")
+                                || domain.contains("bitdefender"))
                         {
                             evidence.push(Evidence::new(
                                 EvidenceType::HostsFileTampering,
                                 self.name(),
-                                format!("Security domain sinkholed in hosts file: {} -> {}", domain, ip),
+                                format!("Security or safety domain sinkholed in hosts file: {} -> {}", domain, ip),
                                 line.to_string(),
                             ));
                         }
@@ -84,11 +88,22 @@ impl Collector for WindowsCertificatesCollector {
             let text = String::from_utf8_lossy(&output.stdout);
             for line in text.lines() {
                 let lower = line.to_lowercase();
-                if lower.contains("subject:") && (lower.contains("teramind") || lower.contains("activtrak") || lower.contains("fiddler") || lower.contains("charles")) {
+                if lower.contains("subject:")
+                    && (lower.contains("teramind")
+                        || lower.contains("activtrak")
+                        || lower.contains("fiddler")
+                        || lower.contains("charles")
+                        || lower.contains("mitmproxy")
+                        || lower.contains("searchinform")
+                        || lower.contains("infowatch")
+                        || lower.contains("proxyman")
+                        || lower.contains("portswigger")
+                        || lower.contains("burp suite"))
+                {
                     evidence.push(Evidence::new(
                         EvidenceType::UntrustedRootCertificate,
                         self.name(),
-                        format!("Suspicious SSL MITM Root Certificate detected in store: {}", line.trim()),
+                        format!("Suspicious SSL MITM Interception Root Certificate in ROOT store: {}", line.trim()),
                         text.to_string(),
                     ));
                 }

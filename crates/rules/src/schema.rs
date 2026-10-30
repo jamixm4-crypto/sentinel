@@ -29,6 +29,8 @@ pub struct Rule {
     pub removal: Option<RemovalInstructions>,
     #[serde(default)]
     pub references: Vec<String>,
+    #[serde(default)]
+    pub mitre_attack: Vec<String>,
 }
 
 fn default_confidence() -> f32 {
@@ -60,6 +62,8 @@ pub struct DetectionCriteria {
     pub bundle_ids: Vec<String>,
     #[serde(default)]
     pub package_names: Vec<String>,
+    #[serde(default)]
+    pub browser_extensions: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

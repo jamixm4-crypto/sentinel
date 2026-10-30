@@ -341,12 +341,12 @@ pub fn render_html_string(result: &ScanResult, _lang: Lang) -> String {
     document.getElementById('findingCount').innerText = findings.length;
 
     // Update MITRE ATT&CK Matrix
-    const hasKeylog = findings.some(f => f.category === 'KeyboardCapture');
-    const hasScreen = findings.some(f => f.category === 'ScreenCapture');
-    const hasHardware = findings.some(f => f.evidence && f.evidence.some(e => e.evidence_type === 'HardwareCaptureAccess'));
-    const hasRemote = findings.some(f => f.category === 'RemoteAccess');
-    const hasC2 = findings.some(f => f.rule_id === 'stalkerware_c2_network_beacon' || f.category === 'NetworkActivity');
-    const hasWatchdog = findings.some(f => f.category === 'ProcessWatcher');
+    const hasKeylog = findings.some(f => f.category === 'KeyboardCapture' || (f.mitre_attack && f.mitre_attack.includes('T1056.001')));
+    const hasScreen = findings.some(f => f.category === 'ScreenCapture' || (f.mitre_attack && (f.mitre_attack.includes('T1113') || f.mitre_attack.includes('T1125'))));
+    const hasHardware = findings.some(f => (f.evidence && f.evidence.some(e => e.evidence_type === 'HardwareCaptureAccess')) || (f.mitre_attack && (f.mitre_attack.includes('T1123') || f.mitre_attack.includes('T1125'))));
+    const hasRemote = findings.some(f => f.category === 'RemoteAccess' || (f.mitre_attack && (f.mitre_attack.includes('T1021.001') || f.mitre_attack.includes('T1219'))));
+    const hasC2 = findings.some(f => f.rule_id === 'stalkerware_c2_network_beacon' || f.category === 'NetworkActivity' || (f.mitre_attack && f.mitre_attack.includes('T1071.001')));
+    const hasWatchdog = findings.some(f => f.category === 'ProcessWatcher' || (f.mitre_attack && f.mitre_attack.includes('T1562.001')));
 
     function updateMitre(id, detected) {{
       const el = document.getElementById(id);
@@ -405,6 +405,7 @@ pub fn render_html_string(result: &ScanResult, _lang: Lang) -> String {
             <div style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
               ${{f.vendor ? f.vendor + ' • ' : ''}}${{f.category}} • Confidence: ${{Math.round(f.confidence.score * 100)}}%
             </div>
+            ${{f.mitre_attack && f.mitre_attack.length > 0 ? `<div style="margin-top: 6px;">${{f.mitre_attack.map(m => `<span style="display:inline-block; font-size:11px; background:#1e293b; border:1px solid #3b82f6; color:#93c5fd; padding:1px 6px; border-radius:4px; margin-right:4px;">ATT&CK ${{m}}</span>`).join('')}}</div>` : ''}}
           </div>
           <span class="badge badge-${{f.severity}}">${{f.severity}}</span>
         </div>

@@ -77,7 +77,23 @@ sentinel scan --format ndjson
 sentinel explain STK-WIN-0042
 sentinel explain stalkerware_c2_network_beacon
 
-# 8. Офлайн-обновление базы правил и C2-доменов:
+# 8. Шифрование отчётов с защитой паролем:
+sentinel scan --encrypt-report --password "MySecretPass"
+sentinel decrypt sentinel-report-20261030_120000.html.enc
+
+# 9. Дифференциальный аудит и сравнение слепков системы (Snapshot Diff):
+sentinel snapshot save baseline.json
+sentinel snapshot diff baseline.json
+
+# 10. Автоматизация регулярного аудита в планировщике:
+sentinel schedule install --daily --time 10:00
+sentinel schedule status
+sentinel schedule remove
+
+# 11. Аудит подключенного Android-смартфона на stalkerware (через USB ADB):
+sentinel mobile scan
+
+# 12. Офлайн-обновление базы правил и C2-доменов:
 sentinel rules update --from /path/to/custom_rules/
 sentinel rules update --from /path/to/c2_domains.txt
 ```
@@ -220,6 +236,61 @@ sentinel remove --all-safe --execute
 sentinel allow list
 sentinel allow add "my_custom_tool.exe"
 sentinel allow remove "my_custom_tool.exe"
+```
+
+---
+
+## Дифференциальный аудит и слепки системы (Snapshot & Diff)
+
+Сохраните доверенный снимок системы перед поездкой или оставлением устройства без присмотра, и проверьте точные изменения по возвращении:
+
+```bash
+# Сохранить эталонный снимок (процессы, службы, автозагрузка, порты, расширения, сертификаты):
+sentinel snapshot save baseline.json
+
+# Сравнить текущее состояние с эталоном:
+sentinel snapshot diff baseline.json
+```
+
+---
+
+## Автоматизация регулярного аудита (Scheduler)
+
+Настройка регулярных автоматических проверок без необходимости вручную писать скрипты и таймеры:
+
+```bash
+# Установить ежедневный аудит в 09:30 (Планировщик задач Windows / systemd timer):
+sentinel schedule install --daily --time 09:30
+
+# Проверить статус расписания:
+sentinel schedule status
+
+# Полностью удалить задачу из планировщика:
+sentinel schedule remove
+```
+
+---
+
+## Аудит мобильных устройств (Android ADB)
+
+Проверка подключенного по USB смартфона Android на наличие коммерческого сталкерского ПО, скрытых APK и подозрительных служб специальных возможностей без необходимости root:
+
+```bash
+sentinel mobile scan
+```
+
+---
+
+## Защита отчётов шифрованием
+
+Защитите конфиденциальные результаты криминалистического аудита стойким парольным шифрованием:
+
+```bash
+# Создать зашифрованный контейнер отчёта (исходный открытый HTML сразу удаляется):
+sentinel scan --encrypt-report --password "SecretPassword123"
+
+# Расшифровать и восстановить отчёт при необходимости:
+sentinel decrypt sentinel-report-20261030_120000.html.enc
 ```
 
 ---

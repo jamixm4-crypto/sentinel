@@ -78,7 +78,8 @@ sequenceDiagram
   - **Windows**: Low-level registry run keys, scheduled tasks, Windows services, WMI subscriptions, `CapabilityAccessManager\ConsentStore` (webcam & microphone), `UpperFilters` keyboard filter drivers, and DNS client cache (`ipconfig /displaydns`).
   - **Linux**: `/dev/input` character device handles, evdev sniffing, X11 libraries, PipeWire ScreenCast portals, systemd unit files, XDG autostart entries, and ptrace attach monitoring.
   - **macOS**: LaunchAgents/Daemons, Login items, MDM configuration profiles, CoreGraphics Event Taps, and TCC database permissions (`kTCCServiceScreenCapture`, `kTCCServiceListenEvent`).
-  - **Common**: Cross-platform process tree enumeration (PID, parent PID, exe path, command-line arguments) and listening network sockets.
+  - **Common**: Cross-platform process tree enumeration (PID, parent PID, exe path, command-line arguments), listening network sockets, and browser extensions inspection (Chrome, Edge, Brave, Firefox, Opera, Yandex).
+  - **Windows**: Services registry keys, Run/RunOnce ASEPs, Startup folders, root certificate store (SSL MITM CAs), Hosts file sinkholes, CapabilityAccessManager (live mic/webcam capture), and WMI Event Consumer persistence.
   - **Offline Forensic Mode**: Directory traversal engine for analyzing static disk images without host process queries.
 
 ### 3. `sentinel-rules`
@@ -106,8 +107,12 @@ sequenceDiagram
 
 ### 7. `sentinel-cli`
 - Top-level command-line application powered by `clap`.
-- Manages subcommands (`scan`, `quarantine`, `restore`, `remove`, `explain`, `allow`, `rules`).
-- Integrates `indicatif` progress spinners and safety controls.
+- Manages subcommands (`scan`, `quarantine`, `restore`, `remove`, `explain`, `allow`, `rules`, `purge`, `snapshot`, `schedule`, `mobile`, `decrypt`).
+- **Differential Audit Engine**: `sentinel snapshot save` and `sentinel snapshot diff` to track baseline system drift.
+- **Automated Scheduler**: Native integration with Windows Task Scheduler, Linux systemd user timers, and macOS LaunchAgents (`sentinel schedule`).
+- **Mobile Device Bridge**: ADB USB verification for connected Android smartphones against mobile stalkerware feeds (`sentinel mobile scan`).
+- **Password-Protected Encryption**: Self-contained AES-256-like encryption for confidential forensic reports (`--encrypt-report` and `sentinel decrypt`).
+- Integrates `indicatif` progress spinners, ANSI styling, and safety controls.
 
 ---
 

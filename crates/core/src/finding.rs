@@ -146,6 +146,8 @@ pub struct Finding {
     pub explanation: FindingExplanation,
     pub removal_steps: RemovalSteps,
     pub references: Vec<String>,
+    #[serde(default)]
+    pub mitre_attack: Vec<String>,
 }
 
 /// Overall result of a complete scan

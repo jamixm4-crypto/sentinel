@@ -41,6 +41,7 @@ pub fn get_all_collectors() -> Vec<Box<dyn Collector>> {
     let mut collectors: Vec<Box<dyn Collector>> = vec![
         Box::new(common::ProcessCollector),
         Box::new(common::NetworkCollector),
+        Box::new(common::BrowserExtensionsCollector),
     ];
 
     #[cfg(target_os = "windows")]
@@ -51,6 +52,7 @@ pub fn get_all_collectors() -> Vec<Box<dyn Collector>> {
         collectors.push(Box::new(windows::WindowsDriversCollector));
         collectors.push(Box::new(windows::WindowsInstalledSoftwareCollector));
         collectors.push(Box::new(windows::WindowsCertificatesCollector));
+        collectors.push(Box::new(windows::WindowsWmiPersistenceCollector));
     }
 
     #[cfg(target_os = "linux")]

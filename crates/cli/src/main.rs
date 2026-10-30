@@ -12,6 +12,11 @@ use sentinel_report::{export_json_report, generate_html_report, print_terminal_s
 use sentinel_rules::get_embedded_rules;
 use sentinel_scoring::ScoringEngine;
 
+mod crypto;
+mod mobile;
+mod schedule;
+mod snapshot;
+
 #[derive(Parser, Debug)]
 #[command(
     name = "sentinel",
@@ -80,6 +85,14 @@ enum Commands {
         /// Personal safety mode: disables modification and suppresses local disk artifacts
         #[arg(long)]
         personal_safety_mode: bool,
+
+        /// Encrypt the generated report using a password
+        #[arg(long)]
+        encrypt_report: bool,
+
+        /// Password for report encryption (optional, prompts if omitted)
+        #[arg(long)]
+        password: Option<String>,
     },
 
     /// Quarantine a detected item safely and reversibly
@@ -166,6 +179,107 @@ enum Commands {
         #[arg(long)]
         reports_only: bool,
     },
+
+    /// Manage system baselines and compute differential change audits
+    Snapshot {
+        #[command(subcommand)]
+        action: SnapshotCommands,
+    },
+
+    /// Manage automated recurring surveillance audits (Windows Task Scheduler / systemd)
+    Schedule {
+        #[command(subcommand)]
+        action: ScheduleCommands,
+    },
+
+    /// Audit connected Android smartphones via USB ADB bridge
+    Mobile {
+        #[command(subcommand)]
+        action: MobileCommands,
+    },
+
+    /// Decrypt a password-protected Sentinel audit report
+    Decrypt {
+        /// Path to encrypted report (.enc file)
+        path: PathBuf,
+
+        /// Destination path for decrypted report
+        #[arg(short, long)]
+        out: Option<PathBuf>,
+
+        /// Decryption password (prompts if omitted)
+        #[arg(short, long)]
+        password: Option<String>,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+enum SnapshotCommands {
+    /// Save current system state as a baseline snapshot
+    Save {
+        /// Path to output baseline JSON file
+        #[arg(default_value = "baseline.json")]
+        path: PathBuf,
+    },
+    /// Compare current live system state against a previous baseline
+    Diff {
+        /// Path to previously saved baseline JSON snapshot
+        baseline: PathBuf,
+
+        /// Select interface language (en | ru)
+        #[arg(short, long, default_value = "en")]
+        lang: String,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+enum ScheduleCommands {
+    /// Install an automated background surveillance audit task
+    Install {
+        /// Run audit daily
+        #[arg(long, default_value_t = true)]
+        daily: bool,
+
+        /// Run audit hourly
+        #[arg(long)]
+        hourly: bool,
+
+        /// Run audit upon user logon
+        #[arg(long)]
+        on_logon: bool,
+
+        /// Time for daily audit (HH:MM format, 24-hour clock)
+        #[arg(long, default_value = "10:00")]
+        time: String,
+
+        /// Language for audit (en | ru)
+        #[arg(short, long, default_value = "en")]
+        lang: String,
+    },
+
+    /// Check status of scheduled background audit
+    Status {
+        /// Language (en | ru)
+        #[arg(short, long, default_value = "en")]
+        lang: String,
+    },
+
+    /// Remove and deregister scheduled background audit
+    Remove {
+        /// Language (en | ru)
+        #[arg(short, long, default_value = "en")]
+        lang: String,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+enum MobileCommands {
+    /// Scan connected Android device for stalkerware and high-risk accessibility services
+    Scan {
+        /// Select interface language (en | ru)
+        #[arg(short, long, default_value = "en")]
+        lang: String,
+    },
 }
 
 #[derive(Subcommand, Debug)]
@@ -211,6 +325,8 @@ fn main() {
             no_open,
             online_lookups: _,
             personal_safety_mode,
+            encrypt_report,
+            password,
         } => {
             let selected_lang = Lang::from_code(&lang);
             execute_scan(
@@ -226,6 +342,8 @@ fn main() {
                 stdout_only,
                 no_open,
                 personal_safety_mode,
+                encrypt_report,
+                password,
             );
         }
         Commands::Quarantine {
@@ -373,6 +491,98 @@ fn main() {
         } => {
             execute_purge(yes, &reports_dir, reports_only);
         }
+        Commands::Snapshot { action } => match action {
+            SnapshotCommands::Save { path } => {
+                println!("  {} Generating baseline system snapshot...", "📸".cyan());
+                let platform = PlatformInfo::current();
+                let collectors = get_all_collectors();
+                let ctx = CollectorContext {
+                    platform: platform.clone(),
+                    privilege_level: platform.privilege_level,
+                    timeout: std::time::Duration::from_secs(15),
+                };
+                let (evidence, _) = run_collectors(&collectors, &ctx);
+                let snap = snapshot::create_snapshot(&evidence);
+                if let Err(e) = snapshot::save_snapshot(&snap, &path) {
+                    eprintln!("Failed to save baseline snapshot: {}", e);
+                } else {
+                    println!("  {} Baseline snapshot saved: {}", "✔".green().bold(), path.display().to_string().cyan());
+                    println!("     Processes: {}, Services: {}, Autostart: {}, Ports: {}, Extensions: {}",
+                        snap.processes.len(), snap.services.len(), snap.autostart.len(), snap.listening_ports.len(), snap.browser_extensions.len());
+                }
+            }
+            SnapshotCommands::Diff { baseline, lang } => {
+                let l = Lang::from_code(&lang);
+                println!("  {} Loading baseline snapshot: {}...", "🔍".cyan(), baseline.display());
+                let base_snap = match snapshot::load_snapshot(&baseline) {
+                    Ok(s) => s,
+                    Err(e) => {
+                        eprintln!("Failed to read baseline snapshot: {}", e);
+                        return;
+                    }
+                };
+                println!("  {} Collecting current system state for differential comparison...", "⏱️".cyan());
+                let platform = PlatformInfo::current();
+                let collectors = get_all_collectors();
+                let ctx = CollectorContext {
+                    platform: platform.clone(),
+                    privilege_level: platform.privilege_level,
+                    timeout: std::time::Duration::from_secs(15),
+                };
+                let (evidence, _) = run_collectors(&collectors, &ctx);
+                let curr_snap = snapshot::create_snapshot(&evidence);
+                let diff = snapshot::compute_diff(&base_snap, &curr_snap);
+                snapshot::print_diff_summary(&diff, l);
+            }
+        },
+        Commands::Schedule { action } => match action {
+            ScheduleCommands::Install { daily, hourly, on_logon, time, lang } => {
+                let l = Lang::from_code(&lang);
+                if let Err(e) = schedule::install_schedule(daily, hourly, on_logon, &time, l) {
+                    eprintln!("{} Failed to configure scheduled audit: {}", "❌".red().bold(), e);
+                }
+            }
+            ScheduleCommands::Status { lang } => {
+                let l = Lang::from_code(&lang);
+                if let Err(e) = schedule::check_schedule_status(l) {
+                    eprintln!("{} Failed to check schedule status: {}", "❌".red().bold(), e);
+                }
+            }
+            ScheduleCommands::Remove { lang } => {
+                let l = Lang::from_code(&lang);
+                if let Err(e) = schedule::remove_schedule(l) {
+                    eprintln!("{} Failed to remove scheduled audit: {}", "❌".red().bold(), e);
+                }
+            }
+        },
+        Commands::Mobile { action } => match action {
+            MobileCommands::Scan { lang } => {
+                let l = Lang::from_code(&lang);
+                if let Err(e) = mobile::scan_connected_mobile_device(l) {
+                    eprintln!("{} Mobile scan error: {}", "❌".red().bold(), e);
+                }
+            }
+        },
+        Commands::Decrypt { path, out, password } => {
+            let password_str = password.unwrap_or_else(|| {
+                println!("Enter decryption password: ");
+                let mut input = String::new();
+                std::io::stdin().read_line(&mut input).unwrap_or_default();
+                input.trim().to_string()
+            });
+            let out_path = out.unwrap_or_else(|| {
+                let s = path.to_string_lossy().to_string();
+                if s.ends_with(".enc") {
+                    PathBuf::from(&s[..s.len() - 4])
+                } else {
+                    PathBuf::from(format!("{}.decrypted", s))
+                }
+            });
+            match crypto::decrypt_report_file(&path, &out_path, &password_str) {
+                Ok(_) => println!("{} Decrypted report successfully saved to: {}", "✔".green().bold(), out_path.display().to_string().cyan()),
+                Err(e) => eprintln!("{} Decryption failed: {}", "❌".red().bold(), e),
+            }
+        }
     }
 }
 
@@ -389,6 +599,8 @@ fn execute_scan(
     stdout_only: bool,
     no_open: bool,
     personal_safety_mode: bool,
+    encrypt_report: bool,
+    password: Option<String>,
 ) {
     let start_time = Instant::now();
     let rules = load_all_rules(rules_dir);
@@ -573,6 +785,23 @@ fn execute_scan(
             eprintln!("Failed to write JSON report: {}", e);
         } else {
             println!("  JSON export generated: {}", json_path.display().to_string().cyan());
+        }
+    }
+
+    if encrypt_report {
+        let password_str = password.unwrap_or_else(|| {
+            println!("Enter encryption password for audit report: ");
+            let mut input = String::new();
+            std::io::stdin().read_line(&mut input).unwrap_or_default();
+            input.trim().to_string()
+        });
+        if !password_str.is_empty() {
+            let enc_html = out_dir.join(format!("sentinel-report-{}.html.enc", date_tag));
+            if let Ok(_) = crypto::encrypt_report_file(&html_path, &enc_html, &password_str) {
+                let _ = std::fs::remove_file(&html_path);
+                println!("  🔒 Encrypted report created: {}", enc_html.display().to_string().green());
+                println!("     (Plaintext report removed. Use 'sentinel decrypt {}' to view)", enc_html.display());
+            }
         }
     }
 }

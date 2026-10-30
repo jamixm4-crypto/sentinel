@@ -22,6 +22,8 @@ pub enum EvidenceType {
     KnownFileArtifact,
     HardwareCaptureAccess,
     CommandAndControlBeacon,
+    BrowserExtension,
+    MobileApplication,
 }
 
 /// Strongly typed container for evidence details
@@ -60,6 +62,22 @@ pub enum EvidenceData {
         device_type: String,
         application: String,
         is_active: bool,
+    },
+    BrowserExtension {
+        browser: String,
+        id: String,
+        name: String,
+        version: String,
+        permissions: Vec<String>,
+        path: String,
+        is_sideloaded: bool,
+    },
+    MobileApp {
+        package_name: String,
+        app_name: Option<String>,
+        is_device_admin: bool,
+        is_accessibility_enabled: bool,
+        apk_path: Option<String>,
     },
     Generic {
         key: String,

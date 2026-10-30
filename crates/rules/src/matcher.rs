@@ -151,6 +151,16 @@ impl<'a> RuleMatcher<'a> {
                     }
                 }
             }
+            Some(EvidenceData::BrowserExtension { id, name, .. }) => {
+                let id_lower = id.to_lowercase();
+                let name_lower = name.to_lowercase();
+                for ext in &rule.detection.browser_extensions {
+                    let ext_lower = ext.to_lowercase();
+                    if id_lower == ext_lower || name_lower.contains(&ext_lower) {
+                        return true;
+                    }
+                }
+            }
             _ => {
                 // Generic string matching against description
                 let desc_lower = ev.description.to_lowercase();

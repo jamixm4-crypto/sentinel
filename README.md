@@ -80,7 +80,23 @@ sentinel scan --format ndjson
 sentinel explain STK-WIN-0042
 sentinel explain stalkerware_c2_network_beacon
 
-# 8. Offline rules & C2 domain feed updates:
+# 8. Password-protected report encryption:
+sentinel scan --encrypt-report --password "MySecretPass"
+sentinel decrypt sentinel-report-20261030_120000.html.enc
+
+# 9. Differential audit & system baseline comparison:
+sentinel snapshot save baseline.json
+sentinel snapshot diff baseline.json
+
+# 10. Automated recurring surveillance audit schedule:
+sentinel schedule install --daily --time 10:00
+sentinel schedule status
+sentinel schedule remove
+
+# 11. Android smartphone stalkerware audit (via USB ADB):
+sentinel mobile scan
+
+# 12. Offline rules & C2 domain feed updates:
 sentinel rules update --from /path/to/custom_rules/
 sentinel rules update --from /path/to/c2_domains.txt
 ```
@@ -227,6 +243,61 @@ Manage your local allowlist to suppress expected administrative tools:
 sentinel allow list
 sentinel allow add "my_admin_tool.exe"
 sentinel allow remove "my_admin_tool.exe"
+```
+
+---
+
+## Differential System Audits & Baseline Snapshots
+
+Preserve a trusted system baseline before leaving a device unattended or traveling, and verify exact modifications upon return:
+
+```bash
+# Save trusted system fingerprint (processes, services, autostart, ports, extensions, certs):
+sentinel snapshot save baseline.json
+
+# Audit live system against baseline and output modifications:
+sentinel snapshot diff baseline.json
+```
+
+---
+
+## Automated Background Surveillance Audits
+
+Configure low-overhead background audits without writing shell scripts:
+
+```bash
+# Register automatic daily audit at 09:30 AM (Windows Task Scheduler / systemd user timer):
+sentinel schedule install --daily --time 09:30
+
+# Check scheduled status:
+sentinel schedule status
+
+# Cleanly deregister and remove the audit task:
+sentinel schedule remove
+```
+
+---
+
+## Connected Mobile Device Audit (Android ADB)
+
+Audit connected Android smartphones for commercial stalkerware, suspicious APK packages, and stealth accessibility service captures without requiring root:
+
+```bash
+sentinel mobile scan
+```
+
+---
+
+## Encrypted Report Storage
+
+Protect sensitive forensic audit reports with password-authenticated encryption:
+
+```bash
+# Generate encrypted report container (plaintext HTML removed immediately):
+sentinel scan --encrypt-report --password "SecretPassword123"
+
+# Decrypt and restore the report when needed:
+sentinel decrypt sentinel-report-20261030_120000.html.enc
 ```
 
 ---

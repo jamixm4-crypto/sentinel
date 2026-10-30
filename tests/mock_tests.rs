@@ -306,6 +306,7 @@ fn test_cmdline_regex_matching_accuracy() {
         condition: None,
         removal: None,
         references: vec![],
+        mitre_attack: vec![],
     };
 
     let rules = vec![rule];
@@ -553,4 +554,83 @@ fn test_searchinform_dlp_detection() {
     assert_eq!(f.category, Category::OrganizationManaged);
     assert_eq!(f.removal_policy, RemovalPolicy::DoNotRemove);
 }
+
+#[test]
+fn test_active_hardware_sensor_capture_alert() {
+    let rules = get_embedded_rules();
+    let scoring = ScoringEngine::new(&rules, Lang::En);
+
+    let evidence = vec![
+        Evidence::new(
+            EvidenceType::HardwareCaptureAccess,
+            "WindowsConsentStoreCollector",
+            "ACTIVE hardware sensor access: 'C:\\Users\\victim\\AppData\\Local\\Temp\\spy_audio.exe' is currently using microphone",
+            "Capability: microphone",
+        )
+        .with_data(EvidenceData::HardwareAccess {
+            device_type: "microphone".to_string(),
+            application: "C:\\Users\\victim\\AppData\\Local\\Temp\\spy_audio.exe".to_string(),
+            is_active: true,
+        }),
+    ];
+
+    let (verdict, findings) = scoring.evaluate(&evidence);
+    assert_eq!(verdict, Verdict::SurveillanceLikely);
+    assert!(findings.iter().any(|f| f.rule_id == "active_hardware_sensor_capture"));
+    let f = findings.iter().find(|f| f.rule_id == "active_hardware_sensor_capture").unwrap();
+    assert_eq!(f.severity, Severity::Critical);
+    assert!(f.mitre_attack.contains(&"T1123".to_string()));
+}
+
+#[test]
+fn test_untrusted_root_certificate_detection() {
+    let rules = get_embedded_rules();
+    let scoring = ScoringEngine::new(&rules, Lang::En);
+
+    let evidence = vec![
+        Evidence::new(
+            EvidenceType::UntrustedRootCertificate,
+            "WindowsCertificatesCollector",
+            "Suspicious SSL MITM Root Certificate detected: Subject: CN=SearchInform Root CA",
+            "Cert details...",
+        ),
+    ];
+
+    let (_, findings) = scoring.evaluate(&evidence);
+    assert!(findings.iter().any(|f| f.rule_id == "untrusted_root_certificate_mitm"));
+    let f = findings.iter().find(|f| f.rule_id == "untrusted_root_certificate_mitm").unwrap();
+    assert_eq!(f.severity, Severity::High);
+    assert!(f.mitre_attack.contains(&"T1557.001".to_string()));
+}
+
+#[test]
+fn test_dangerous_browser_extension_detection() {
+    let rules = get_embedded_rules();
+    let scoring = ScoringEngine::new(&rules, Lang::En);
+
+    let evidence = vec![
+        Evidence::new(
+            EvidenceType::BrowserExtension,
+            "BrowserExtensionsCollector",
+            "Browser Extension with elevated permissions: 'AdBlocker Stealth' in Chrome",
+            "Permissions: debugger, <all_urls>",
+        )
+        .with_data(EvidenceData::BrowserExtension {
+            browser: "Chrome".to_string(),
+            id: "abckeyloggeraddon".to_string(),
+            name: "AdBlocker Stealth".to_string(),
+            version: "1.0".to_string(),
+            permissions: vec!["debugger".to_string(), "<all_urls>".to_string()],
+            path: "C:\\Chrome\\Ext\\manifest.json".to_string(),
+            is_sideloaded: true,
+        }),
+    ];
+
+    let (_, findings) = scoring.evaluate(&evidence);
+    assert!(findings.iter().any(|f| f.rule_id == "browser_extension_high_privilege"));
+    let f = findings.iter().find(|f| f.rule_id == "browser_extension_high_privilege").unwrap();
+    assert_eq!(f.severity, Severity::High);
+    assert!(f.mitre_attack.contains(&"T1185".to_string()));
+}
+
 
