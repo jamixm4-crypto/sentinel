@@ -1,4 +1,5 @@
 use colored::*;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use sentinel_core::Lang;
@@ -10,43 +11,53 @@ pub struct MobileAuditFinding {
     pub description: String,
 }
 
-pub fn scan_connected_mobile_device(lang: Lang) -> Result<(), String> {
+pub fn scan_connected_mobile_device(lang: Lang, custom_ios_backup: Option<&Path>) -> Result<(), String> {
     println!();
     match lang {
-        Lang::Ru => println!("{}", "📱 ЗАПУСК АУДИТА ПОДКЛЮЧЕННЫХ МОБИЛЬНЫХ УСТРОЙСТВ (ANDROID ADB)".bold().cyan()),
-        Lang::En => println!("{}", "📱 LAUNCHING CONNECTED MOBILE DEVICE AUDIT (ANDROID ADB)".bold().cyan()),
+        Lang::Ru => println!("{}", "📱 ЗАПУСК АУДИТА МОБИЛЬНЫХ УСТРОЙСТВ (ANDROID ADB & IOS BACKUPS)".bold().cyan()),
+        Lang::En => println!("{}", "📱 LAUNCHING MOBILE DEVICE AUDIT (ANDROID ADB & IOS BACKUPS)".bold().cyan()),
     }
     println!("{}", "─".repeat(70).dimmed());
 
-    // 1. Check if adb is installed
+    // 1. Audit Android Devices via ADB
+    audit_android_devices(lang);
+
+    // 2. Audit iOS Local Backups (iTunes / Finder / MVT style)
+    audit_ios_backups(lang, custom_ios_backup);
+
+    Ok(())
+}
+
+fn audit_android_devices(lang: Lang) {
+    match lang {
+        Lang::Ru => println!("\n{}", "🤖 Проверка Android устройств через ADB...".bold()),
+        Lang::En => println!("\n{}", "🤖 Auditing Android Devices via ADB...".bold()),
+    }
+
     let adb_check = Command::new("adb").arg("version").output();
     if adb_check.is_err() {
         match lang {
             Lang::Ru => {
-                println!("{}", "❌ Утилита 'adb' (Android Debug Bridge) не найдена в системном PATH.".yellow());
-                println!("\nДля аудита смартфонов Android на stalkerware:");
-                println!("  1. Установите adb: 'winget install Google.PlatformTools' (Windows) или 'sudo apt install adb' (Linux)");
-                println!("  2. На телефоне откройте: Настройки > О телефоне > Нажмите 7 раз на 'Номер сборки'");
-                println!("  3. В меню 'Для разработчиков' включите 'Отладка по USB'");
-                println!("  4. Подключите телефон кабелем к ПК, подтвердите доверие на экране телефона и повторите 'sentinel mobile scan'.");
+                println!("{}", "  ⚠️ Утилита 'adb' (Android Debug Bridge) не найдена в PATH.".yellow());
+                println!("    Для проверки Android: установите adb ('winget install Google.PlatformTools' или 'sudo apt install adb')");
+                println!("    и включите 'Отладка по USB' в настройках смартфона для разработчиков.");
             }
             Lang::En => {
-                println!("{}", "❌ 'adb' (Android Debug Bridge) was not found in system PATH.".yellow());
-                println!("\nTo audit Android smartphones for stalkerware:");
-                println!("  1. Install adb: 'winget install Google.PlatformTools' (Windows) or 'brew install android-platform-tools' (macOS)");
-                println!("  2. On your phone: Settings > About Phone > Tap 'Build Number' 7 times");
-                println!("  3. Open 'Developer Options' and enable 'USB Debugging'");
-                println!("  4. Connect the phone via USB cable, tap 'Allow USB debugging' on screen, and re-run 'sentinel mobile scan'.");
+                println!("{}", "  ⚠️ 'adb' (Android Debug Bridge) was not found in system PATH.".yellow());
+                println!("    To audit Android: install adb ('winget install Google.PlatformTools' or 'brew install android-platform-tools')");
+                println!("    and enable 'USB Debugging' in Developer Options on your phone.");
             }
         }
-        return Ok(());
+        return;
     }
 
-    // 2. Query connected devices
-    let devices_output = Command::new("adb")
-        .args(["devices"])
-        .output()
-        .map_err(|e| format!("Failed to run adb devices: {}", e))?;
+    let devices_output = match Command::new("adb").args(["devices"]).output() {
+        Ok(o) => o,
+        Err(e) => {
+            println!("  {} Failed to execute adb: {}", "✖".red(), e);
+            return;
+        }
+    };
 
     let devices_str = String::from_utf8_lossy(&devices_output.stdout);
     let mut attached_devices = Vec::new();
@@ -59,121 +70,255 @@ pub fn scan_connected_mobile_device(lang: Lang) -> Result<(), String> {
 
     if attached_devices.is_empty() {
         match lang {
-            Lang::Ru => {
-                println!("{}", "⚠️ Подключенные устройства Android не обнаружены.".yellow());
-                println!("Убедитесь, что телефон подключен по USB-кабелю и на экране смартфона нажато 'Разрешить отладку по USB'.");
-            }
-            Lang::En => {
-                println!("{}", "⚠️ No authorized Android devices detected.".yellow());
-                println!("Ensure your phone is connected via USB and you accepted the 'Allow USB debugging' prompt on the device screen.");
-            }
+            Lang::Ru => println!("  ℹ️ Нет авторизованных устройств Android, подключенных по USB кабелю."),
+            Lang::En => println!("  ℹ️ No authorized Android devices currently connected via USB."),
         }
-        return Ok(());
+        return;
     }
 
     for dev in &attached_devices {
-        println!("\n{} {}...", "🔍 Сканирование устройства:".bold(), dev.cyan());
-
-        // 3. Query installed packages
-        let pkg_out = Command::new("adb")
-            .args(["-s", dev, "shell", "pm", "list", "packages", "-u"])
-            .output()
-            .map_err(|e| format!("Failed to query packages on device {}: {}", dev, e))?;
-
-        let pkg_text = String::from_utf8_lossy(&pkg_out.stdout);
-        let packages: Vec<&str> = pkg_text
-            .lines()
-            .filter_map(|l| l.strip_prefix("package:"))
-            .collect();
-
-        // 4. Query accessibility services
-        let access_out = Command::new("adb")
-            .args(["-s", dev, "shell", "settings", "get", "secure", "enabled_accessibility_services"])
-            .output()
-            .ok();
-        let access_str = access_out
-            .as_ref()
-            .map(|o| String::from_utf8_lossy(&o.stdout).to_string())
-            .unwrap_or_default();
+        println!("  {} {}...", "🔍 Сканирование устройства:".bold(), dev.cyan());
 
         let mut findings = Vec::new();
 
-        for pkg in &packages {
-            let pkg_lower = pkg.to_lowercase();
-
-            // Match against known stalkerware package signatures
-            if pkg_lower.contains("mspy")
-                || pkg_lower.contains("spappmonitoring")
-                || pkg_lower.contains("cerberus")
-                || pkg_lower.contains("snoopza")
-                || pkg_lower.contains("kidsguard")
-                || pkg_lower.contains("clevguard")
-                || pkg_lower.contains("hoverwatch")
-                || pkg_lower.contains("trackview")
-                || pkg_lower.contains("mobiletracker")
-                || pkg_lower.contains("spyhuman")
-                || pkg_lower.contains("ikeymonitor")
-                || pkg_lower.contains("flexispy")
-                || pkg_lower.contains("cocospy")
-                || pkg_lower.contains("spyic")
-                || pkg_lower.contains("thetruthspy")
-                || pkg_lower.contains("highster")
-                || pkg_lower.contains("app.system.service")
-                || pkg_lower.contains("com.android.core.sync")
-            {
-                findings.push(MobileAuditFinding {
-                    package_name: pkg.to_string(),
-                    threat_name: "Covert Android Stalkerware / Spyware".to_string(),
-                    severity: "Critical",
-                    description: format!("Known stalkerware indicator identified in installed packages: {}", pkg),
-                });
+        // Check installed packages
+        if let Ok(pkg_out) = Command::new("adb").args(["-s", dev, "shell", "pm", "list", "packages", "-u"]).output() {
+            let pkg_text = String::from_utf8_lossy(&pkg_out.stdout);
+            for line in pkg_text.lines() {
+                if let Some(pkg) = line.strip_prefix("package:") {
+                    let pkg_lower = pkg.to_lowercase();
+                    if pkg_lower.contains("mspy")
+                        || pkg_lower.contains("spappmonitoring")
+                        || pkg_lower.contains("cerberus")
+                        || pkg_lower.contains("snoopza")
+                        || pkg_lower.contains("kidsguard")
+                        || pkg_lower.contains("clevguard")
+                        || pkg_lower.contains("hoverwatch")
+                        || pkg_lower.contains("trackview")
+                        || pkg_lower.contains("mobiletracker")
+                        || pkg_lower.contains("spyhuman")
+                        || pkg_lower.contains("ikeymonitor")
+                        || pkg_lower.contains("flexispy")
+                        || pkg_lower.contains("cocospy")
+                        || pkg_lower.contains("spyic")
+                        || pkg_lower.contains("thetruthspy")
+                        || pkg_lower.contains("highster")
+                        || pkg_lower.contains("app.system.service")
+                        || pkg_lower.contains("com.android.core.sync")
+                    {
+                        findings.push(MobileAuditFinding {
+                            package_name: pkg.to_string(),
+                            threat_name: "Covert Android Stalkerware / Spyware".to_string(),
+                            severity: "Critical",
+                            description: format!("Known stalkerware signature in package list: {}", pkg),
+                        });
+                    }
+                }
             }
         }
 
-        // Check if unknown app holds Accessibility permissions
-        if !access_str.is_empty() && access_str.trim() != "null" {
-            for service in access_str.split(':') {
-                let serv_trimmed = service.trim();
-                if !serv_trimmed.is_empty()
-                    && !serv_trimmed.contains("google")
-                    && !serv_trimmed.contains("talkback")
-                    && !serv_trimmed.contains("samsung")
-                {
+        // Check accessibility services
+        if let Ok(access_out) = Command::new("adb").args(["-s", dev, "shell", "settings", "get", "secure", "enabled_accessibility_services"]).output() {
+            let access_str = String::from_utf8_lossy(&access_out.stdout);
+            if !access_str.is_empty() && access_str.trim() != "null" {
+                for service in access_str.split(':') {
+                    let s_trimmed = service.trim();
+                    if !s_trimmed.is_empty()
+                        && !s_trimmed.contains("google")
+                        && !s_trimmed.contains("talkback")
+                        && !s_trimmed.contains("samsung")
+                    {
+                        findings.push(MobileAuditFinding {
+                            package_name: s_trimmed.to_string(),
+                            threat_name: "High-Risk Accessibility Service Active".to_string(),
+                            severity: "High",
+                            description: format!("Non-system service granted full Accessibility privileges: {}", s_trimmed),
+                        });
+                    }
+                }
+            }
+        }
+
+        // Check active Device Administrators
+        if let Ok(admin_out) = Command::new("adb").args(["-s", dev, "shell", "dpm", "list-active-admins"]).output() {
+            let admin_str = String::from_utf8_lossy(&admin_out.stdout);
+            for line in admin_str.lines() {
+                let l_trim = line.trim();
+                if l_trim.contains('/') && !l_trim.contains("google") && !l_trim.contains("samsung") && !l_trim.contains("android") {
                     findings.push(MobileAuditFinding {
-                        package_name: serv_trimmed.to_string(),
-                        threat_name: "High-Risk Accessibility Service Active".to_string(),
+                        package_name: l_trim.to_string(),
+                        threat_name: "Elevated Device Administrator App Active".to_string(),
                         severity: "High",
-                        description: format!("Non-system app granted full Accessibility Service: {}", serv_trimmed),
+                        description: format!("Third-party app holds device administration rights (anti-uninstall/remote wipe): {}", l_trim),
                     });
                 }
             }
         }
 
-        if findings.is_empty() {
-            match lang {
-                Lang::Ru => println!("{}", "  ✔ На смартфоне не обнаружено известных пакетов stalkerware и скрытых служб специальных возможностей.".green().bold()),
-                Lang::En => println!("{}", "  ✔ No known stalkerware packages or suspicious accessibility services found on smartphone.".green().bold()),
-            }
-        } else {
-            match lang {
-                Lang::Ru => {
-                    println!("  {} Обнаружено угроз на телефоне: {}", "🚨".red(), findings.len().to_string().bold().red());
-                    for f in &findings {
-                        println!("    • [{}] {} — {}", f.severity.red().bold(), f.threat_name.bold(), f.package_name.yellow());
-                        println!("      Детали: {}", f.description.dimmed());
+        // Check notification listeners
+        if let Ok(notif_out) = Command::new("adb").args(["-s", dev, "shell", "settings", "get", "secure", "enabled_notification_listeners"]).output() {
+            let notif_str = String::from_utf8_lossy(&notif_out.stdout);
+            if !notif_str.is_empty() && notif_str.trim() != "null" {
+                for listener in notif_str.split(':') {
+                    let l_trim = listener.trim();
+                    if !l_trim.is_empty() && !l_trim.contains("google") && !l_trim.contains("samsung") && !l_trim.contains("android") {
+                        findings.push(MobileAuditFinding {
+                            package_name: l_trim.to_string(),
+                            threat_name: "Notification Listener Service (SMS/Chat Interception)".to_string(),
+                            severity: "Medium",
+                            description: format!("App can intercept all incoming notifications and 2FA codes: {}", l_trim),
+                        });
                     }
                 }
-                Lang::En => {
-                    println!("  {} Threats detected on phone: {}", "🚨".red(), findings.len().to_string().bold().red());
-                    for f in &findings {
-                        println!("    • [{}] {} — {}", f.severity.red().bold(), f.threat_name.bold(), f.package_name.yellow());
-                        println!("      Details: {}", f.description.dimmed());
+            }
+        }
+
+        // Report findings
+        if findings.is_empty() {
+            match lang {
+                Lang::Ru => println!("    ✔ Устройство чисто: известных пакетов stalkerware, скрытых служб accessibility и подозрительных admin-прав не обнаружено."),
+                Lang::En => println!("    ✔ Device clean: no known stalkerware packages, covert accessibility services, or rogue device admin rights found."),
+            }
+        } else {
+            for f in &findings {
+                println!("    • [{}] {} — {}", f.severity.red().bold(), f.threat_name.bold(), f.package_name.yellow());
+                println!("      {}", f.description.dimmed());
+            }
+        }
+    }
+}
+
+fn audit_ios_backups(lang: Lang, custom_path: Option<&Path>) {
+    match lang {
+        Lang::Ru => println!("\n{}", "🍏 Проверка локальных резервных копий iOS (iTunes / Finder)...".bold()),
+        Lang::En => println!("\n{}", "🍏 Auditing Local iOS Backups (iTunes / Finder)...".bold()),
+    }
+
+    let search_roots = if let Some(p) = custom_path {
+        vec![p.to_path_buf()]
+    } else {
+        get_default_ios_backup_dirs()
+    };
+
+    let mut found_backups = 0;
+
+    for root in search_roots {
+        if !root.is_dir() {
+            continue;
+        }
+
+        if let Ok(entries) = std::fs::read_dir(&root) {
+            for entry in entries.filter_map(Result::ok) {
+                let backup_dir = entry.path();
+                if backup_dir.is_dir() {
+                    let manifest_file = backup_dir.join("Manifest.plist");
+                    let info_file = backup_dir.join("Info.plist");
+                    let status_file = backup_dir.join("Status.plist");
+
+                    if manifest_file.exists() || info_file.exists() || status_file.exists() {
+                        found_backups += 1;
+                        let dir_name = backup_dir.file_name().unwrap_or_default().to_string_lossy();
+                        println!("  {} {} ({})", "🔍 Резервная копия iOS:".bold(), dir_name.cyan(), backup_dir.display());
+
+                        let mut ios_findings = Vec::new();
+
+                        // Scan Info.plist / Manifest for known iOS stalkerware bundle IDs
+                        let mut content = String::new();
+                        if let Ok(c) = std::fs::read_to_string(&info_file) {
+                            content.push_str(&c);
+                        }
+                        if let Ok(c) = std::fs::read_to_string(&manifest_file) {
+                            content.push_str(&c);
+                        }
+
+                        let content_lower = content.to_lowercase();
+                        let known_ios_spyware = [
+                            ("com.mspyonline", "mSpy iOS Monitoring Profile"),
+                            ("com.ikeymonitor", "iKeyMonitor iOS Stalkerware"),
+                            ("com.flexispy", "FlexiSPY iOS Spyware"),
+                            ("com.clevguard", "KidsGuard / ClevGuard iOS Tracker"),
+                            ("com.hoverwatch", "Hoverwatch iOS Profile"),
+                            ("com.spappmonitoring", "SPAPP Monitoring iOS"),
+                            ("com.tigersprout", "TigerSprout Spyware"),
+                            ("org.cydia", "Cydia Substrate (Jailbreak / Unrestricted Root)"),
+                            ("com.saurik.cydia", "Cydia Installer (Jailbreak Environment)"),
+                            ("org.coolstar.sileostore", "Sileo Package Manager (Jailbreak Environment)"),
+                            ("com.unc0ver", "unc0ver Jailbreak Artifact"),
+                        ];
+
+                        for (bundle, name) in &known_ios_spyware {
+                            if content_lower.contains(bundle) {
+                                ios_findings.push(MobileAuditFinding {
+                                    package_name: bundle.to_string(),
+                                    threat_name: name.to_string(),
+                                    severity: "Critical",
+                                    description: format!("Identified stalkerware/jailbreak bundle ID in backup metadata: {}", bundle),
+                                });
+                            }
+                        }
+
+                        if ios_findings.is_empty() {
+                            match lang {
+                                Lang::Ru => println!("    ✔ В резервной копии не обнаружено признаков джейлбрейка и известных stalkerware-профилей."),
+                                Lang::En => println!("    ✔ Backup clean: no jailbreak indicators or known stalkerware profiles identified."),
+                            }
+                        } else {
+                            for f in &ios_findings {
+                                println!("    • [{}] {} — {}", f.severity.red().bold(), f.threat_name.bold(), f.package_name.yellow());
+                                println!("      {}", f.description.dimmed());
+                            }
+                        }
                     }
                 }
             }
         }
     }
 
+    if found_backups == 0 {
+        match lang {
+            Lang::Ru => {
+                println!("  ℹ️ Локальные резервные копии iOS не найдены в стандартных каталогах.");
+                println!("    Для анализа iPhone подключите его к ПК через iTunes/Finder, создайте локальную резервную копию и повторите скан.");
+                println!("    Или укажите путь вручную: 'sentinel mobile scan --ios /path/to/backup'.");
+            }
+            Lang::En => {
+                println!("  ℹ️ No local iOS backups detected in standard backup directories.");
+                println!("    To audit an iPhone, connect it via USB to iTunes/Finder, create an unencrypted local backup, and rerun scan.");
+                println!("    Or specify path manually: 'sentinel mobile scan --ios /path/to/backup'.");
+            }
+        }
+    }
+
     println!();
-    Ok(())
+}
+
+fn get_default_ios_backup_dirs() -> Vec<PathBuf> {
+    let mut dirs = Vec::new();
+
+    #[cfg(target_os = "windows")]
+    {
+        if let Some(appdata) = dirs::data_dir() {
+            dirs.push(appdata.join("Apple Computer").join("MobileSync").join("Backup"));
+            dirs.push(appdata.join("Apple").join("MobileSync").join("Backup"));
+        }
+        if let Some(user_prof) = dirs::home_dir() {
+            dirs.push(user_prof.join("Apple").join("MobileSync").join("Backup"));
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        if let Some(home) = dirs::home_dir() {
+            dirs.push(home.join("Library").join("Application Support").join("MobileSync").join("Backup"));
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        if let Some(home) = dirs::home_dir() {
+            dirs.push(home.join(".local").join("share").join("MobileSync").join("Backup"));
+        }
+    }
+
+    dirs
 }

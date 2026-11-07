@@ -149,7 +149,7 @@ For complete architecture diagrams and sequence charts, see **[ARCHITECTURE.md](
                                  ▼
                      ┌───────────────────────┐
                      │ Multi-Modal Correlator│
-                     │  (75+ Rules, 280+ C2) │
+                     │ (137 Rules, 280+ C2)  │
                      └───────────┬───────────┘
                                  │
                  ┌───────────────┴───────────────┐
@@ -167,7 +167,7 @@ Sentinel is engineered as a collection of modular Rust crates publishable to cra
 |---|---|---|
 | [`sentinel-core`](crates/core/) | Core Domain Types | Platform detection, evidence representations, finding models, verdicts. |
 | [`sentinel-collectors`](crates/collectors/) | Evidence Gathering | Cross-platform process enumeration, Windows Services registry audit, systemd daemons, registry ASEPs, consent stores, socket auditing. |
-| [`sentinel-rules`](crates/rules/) | Declarative Rules Engine | 135+ embedded YAML signatures (stalkerware, keyloggers, enterprise DLP suites, Russian/CIS surveillance systems, IT monitoring like Zabbix/Prometheus/Wazuh, RMM tools), 280+ C2 domains. |
+| [`sentinel-rules`](crates/rules/) | Declarative Rules Engine | 137 embedded YAML signatures (stalkerware, keyloggers, enterprise DLP suites, Russian/CIS surveillance systems, IT monitoring like Zabbix/Prometheus/Wazuh, RMM tools), 280+ C2 domains. |
 | [`sentinel-scoring`](crates/scoring/) | Multi-Factor Correlation | Process masquerading detection, multi-modal corroboration, user allowlisting. |
 | [`sentinel-removal`](crates/removal/) | Remediation & Vault | Encrypted quarantine, SHA-256 state tracking, dry-run safety, clean restore. |
 | [`sentinel-report`](crates/report/) | Multi-Format Exporters | Self-contained HTML report, raw JSON, NDJSON, and Elastic Common Schema (ECS). |

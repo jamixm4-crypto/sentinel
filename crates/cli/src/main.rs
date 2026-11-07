@@ -46,7 +46,7 @@ enum Commands {
         #[arg(long, default_value_t = true)]
         json: bool,
 
-        /// Output format: terminal | json | ndjson | ecs | html
+        /// Output format: terminal | json | ndjson | ecs | sarif | csv | stix | html
         #[arg(long, default_value = "terminal")]
         format: String,
 
@@ -274,11 +274,15 @@ enum ScheduleCommands {
 
 #[derive(Subcommand, Debug)]
 enum MobileCommands {
-    /// Scan connected Android device for stalkerware and high-risk accessibility services
+    /// Scan connected Android device or local iOS backup for stalkerware and spyware
     Scan {
         /// Select interface language (en | ru)
         #[arg(short, long, default_value = "en")]
         lang: String,
+
+        /// Path to local iOS backup directory (optional, auto-detected if omitted)
+        #[arg(long)]
+        ios: Option<PathBuf>,
     },
 }
 
@@ -556,9 +560,9 @@ fn main() {
             }
         },
         Commands::Mobile { action } => match action {
-            MobileCommands::Scan { lang } => {
+            MobileCommands::Scan { lang, ios } => {
                 let l = Lang::from_code(&lang);
-                if let Err(e) = mobile::scan_connected_mobile_device(l) {
+                if let Err(e) = mobile::scan_connected_mobile_device(l, ios.as_deref()) {
                     eprintln!("{} Mobile scan error: {}", "❌".red().bold(), e);
                 }
             }
@@ -710,6 +714,27 @@ fn execute_scan(
         return;
     }
 
+    if format_opt == "sarif" {
+        let sarif_val = sentinel_report::generate_sarif_report(&result);
+        if let Ok(s) = serde_json::to_string_pretty(&sarif_val) {
+            println!("{}", s);
+        }
+        return;
+    }
+
+    if format_opt == "csv" {
+        print!("{}", sentinel_report::generate_csv_report(&result));
+        return;
+    }
+
+    if format_opt == "stix" {
+        let stix_val = sentinel_report::generate_stix_report(&result);
+        if let Ok(s) = serde_json::to_string_pretty(&stix_val) {
+            println!("{}", s);
+        }
+        return;
+    }
+
     if format_opt == "json" && stdout_only {
         if let Ok(s) = serde_json::to_string_pretty(&result) {
             println!("{}", s);
@@ -785,6 +810,33 @@ fn execute_scan(
             eprintln!("Failed to write JSON report: {}", e);
         } else {
             println!("  JSON export generated: {}", json_path.display().to_string().cyan());
+        }
+    }
+
+    if format_opt == "sarif" {
+        let sarif_path = out_dir.join(format!("sentinel-report-{}.sarif", date_tag));
+        if let Err(e) = sentinel_report::export_sarif_report(&result, &sarif_path) {
+            eprintln!("Failed to write SARIF report: {}", e);
+        } else {
+            println!("  SARIF export generated: {}", sarif_path.display().to_string().cyan());
+        }
+    }
+
+    if format_opt == "csv" {
+        let csv_path = out_dir.join(format!("sentinel-report-{}.csv", date_tag));
+        if let Err(e) = sentinel_report::export_csv_report(&result, &csv_path) {
+            eprintln!("Failed to write CSV report: {}", e);
+        } else {
+            println!("  CSV export generated: {}", csv_path.display().to_string().cyan());
+        }
+    }
+
+    if format_opt == "stix" {
+        let stix_path = out_dir.join(format!("sentinel-report-{}.stix.json", date_tag));
+        if let Err(e) = sentinel_report::export_stix_report(&result, &stix_path) {
+            eprintln!("Failed to write STIX report: {}", e);
+        } else {
+            println!("  STIX 2.1 export generated: {}", stix_path.display().to_string().cyan());
         }
     }
 

@@ -1,6 +1,6 @@
 use sentinel_core::{
     Category, Evidence, EvidenceData, EvidenceType, Lang,
-    RemovalPolicy, Severity, Verdict,
+    PlatformInfo, PrivilegeLevel, RemovalPolicy, ScanResult, Severity, Verdict,
 };
 use sentinel_rules::get_embedded_rules;
 use sentinel_scoring::ScoringEngine;
@@ -632,5 +632,73 @@ fn test_dangerous_browser_extension_detection() {
     assert_eq!(f.severity, Severity::High);
     assert!(f.mitre_attack.contains(&"T1185".to_string()));
 }
+
+#[test]
+fn test_sarif_csv_stix_export_formats() {
+    let rules = get_embedded_rules();
+    let scoring = ScoringEngine::new(&rules, Lang::En);
+
+    let evidence = vec![
+        Evidence::new(
+            EvidenceType::BrowserExtension,
+            "BrowserExtensionsCollector",
+            "Browser Extension with elevated permissions: 'AdBlocker Stealth' in Chrome",
+            "Permissions: debugger, <all_urls>",
+        )
+        .with_data(EvidenceData::BrowserExtension {
+            browser: "Chrome".to_string(),
+            id: "abckeyloggeraddon".to_string(),
+            name: "AdBlocker Stealth".to_string(),
+            version: "1.0".to_string(),
+            permissions: vec!["debugger".to_string(), "<all_urls>".to_string()],
+            path: "C:\\Chrome\\Ext\\manifest.json".to_string(),
+            is_sideloaded: true,
+        }),
+    ];
+
+    let (verdict, findings) = scoring.evaluate(&evidence);
+    let scan_result = ScanResult {
+        verdict,
+        findings,
+        platform: PlatformInfo {
+            os_name: "windows".to_string(),
+            os_version: "10".to_string(),
+            architecture: "x86_64".to_string(),
+            hostname: "TEST-HOST".to_string(),
+            privilege_level: PrivilegeLevel::StandardUser,
+            is_domain_joined: false,
+            has_mdm_profile: false,
+        },
+        scan_duration: std::time::Duration::from_millis(50),
+        timestamp: chrono::Utc::now().to_rfc3339(),
+        skipped_checks: vec![],
+        total_inspected_processes: 1,
+        total_inspected_persistence: 1,
+    };
+
+    // 1. SARIF 2.1.0 validation
+    let sarif = sentinel_report::generate_sarif_report(&scan_result);
+    assert_eq!(sarif["version"], "2.1.0");
+    let runs = sarif["runs"].as_array().expect("SARIF runs must be an array");
+    assert_eq!(runs.len(), 1);
+    assert_eq!(runs[0]["tool"]["driver"]["name"], "Sentinel");
+    let results = runs[0]["results"].as_array().expect("SARIF results must be an array");
+    assert!(!results.is_empty(), "Must contain at least 1 SARIF finding");
+    assert_eq!(results[0]["ruleId"], "browser_extension_high_privilege");
+
+    // 2. CSV validation
+    let csv = sentinel_report::generate_csv_report(&scan_result);
+    assert!(csv.starts_with("id,rule_id,name,vendor,category,severity,confidence,is_legitimate_likely,removal_policy,evidence_count"));
+    assert!(csv.contains("browser_extension_high_privilege"));
+
+    // 3. STIX 2.1 validation
+    let stix = sentinel_report::generate_stix_report(&scan_result);
+    assert_eq!(stix["type"], "bundle");
+    let objects = stix["objects"].as_array().expect("STIX objects must be an array");
+    assert!(!objects.is_empty());
+    assert_eq!(objects[0]["type"], "indicator");
+    assert_eq!(objects[0]["spec_version"], "2.1");
+}
+
 
 

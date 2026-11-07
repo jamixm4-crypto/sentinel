@@ -49,3 +49,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
 
+      - name: Cargo Deny (Licenses & Security Advisories)
+        if: matrix.os == 'ubuntu-latest'
+        uses: EmbarkStudios/cargo-deny-action@v2
+        continue-on-error: true
+
