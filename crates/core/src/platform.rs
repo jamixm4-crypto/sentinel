@@ -28,7 +28,7 @@ impl PrivilegeLevel {
             }
             Self::StandardUser
         }
-        #[cfg(not(target_os = "windows"))]
+        #[cfg(unix)]
         {
             unsafe {
                 if libc::geteuid() == 0 {
@@ -37,6 +37,10 @@ impl PrivilegeLevel {
                     Self::StandardUser
                 }
             }
+        }
+        #[cfg(not(any(target_os = "windows", unix)))]
+        {
+            Self::StandardUser
         }
     }
 }

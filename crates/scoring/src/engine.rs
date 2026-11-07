@@ -574,7 +574,9 @@ impl<'a> ScoringEngine<'a> {
                 steps.push(RemovalStep {
                     order,
                     description: format!("Move file/directory to quarantine '{}'", p),
-                    action: RemovalAction::QuarantineFile { source_path: p.clone() },
+                    action: RemovalAction::QuarantineFile {
+                        source_path: p.clone(),
+                    },
                     rollback_action: None,
                 });
                 order += 1;

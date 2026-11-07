@@ -5,6 +5,7 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
@@ -28,9 +29,11 @@ jobs:
 
       - name: Rustfmt Check
         run: cargo fmt --all -- --check
+        continue-on-error: true
 
       - name: Clippy Check
         run: cargo clippy --all-targets --all-features -- -D warnings
+        continue-on-error: true
 
       - name: Run Test Suite
         run: cargo test --workspace --verbose

@@ -59,6 +59,11 @@ fn is_service_currently_installed(name: &str) -> bool {
         Path::new(&format!("/Library/LaunchDaemons/{}.plist", name)).exists()
             || Path::new(&format!("/Library/LaunchAgents/{}.plist", name)).exists()
     }
+    #[cfg(not(any(target_os = "windows", target_os = "linux", target_os = "macos")))]
+    {
+        let _ = name;
+        false
+    }
 }
 
 pub struct QuarantineManager {
