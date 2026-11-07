@@ -24,6 +24,8 @@ pub enum EvidenceType {
     CommandAndControlBeacon,
     BrowserExtension,
     MobileApplication,
+    HiddenProcessDiscrepancy,
+    HardwareKeylogger,
 }
 
 /// Strongly typed container for evidence details
@@ -82,6 +84,18 @@ pub enum EvidenceData {
     Generic {
         key: String,
         value: String,
+    },
+    HardwareDevice {
+        device_name: String,
+        hardware_id: String,
+        device_type: String,
+        is_suspicious: bool,
+    },
+    ProcessDiscrepancy {
+        pid: u32,
+        detected_in: String,
+        missing_from: String,
+        details: String,
     },
 }
 

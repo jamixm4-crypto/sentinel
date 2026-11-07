@@ -425,6 +425,13 @@ pub fn render_html_string(result: &ScanResult, _lang: Lang) -> String {
           <p>${{f.explanation.is_legitimate}}</p>
         </div>
 
+        ${{f.explanation.safety_risk ? `
+        <div class="explain-block" style="border-left: 3px solid var(--critical); background: rgba(239, 68, 68, 0.08); border-radius: 4px; padding: 8px 12px; margin: 10px 0;">
+          <div class="explain-title" style="color: var(--critical); font-weight: 600;">⚠️ Personal Safety & Threat Guidance</div>
+          <p style="margin: 4px 0; font-weight: 500;">${{f.explanation.safety_risk}}</p>
+          ${{f.explanation.emergency_guidance ? `<pre style="white-space: pre-wrap; font-size: 12px; margin-top: 6px; color: var(--text-muted); font-family: inherit;">${{f.explanation.emergency_guidance}}</pre>` : ''}}
+        </div>` : ''}}
+
         <details style="margin-top: 10px; cursor: pointer;">
           <summary style="font-weight: 600; color: var(--accent);">Technical Evidence (${{f.evidence.length}} item(s))</summary>
           <div class="evidence-box">

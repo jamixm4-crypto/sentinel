@@ -1,4 +1,5 @@
 use colored::*;
+use serde_json::Value;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -321,4 +322,175 @@ fn get_default_ios_backup_dirs() -> Vec<PathBuf> {
     }
 
     dirs
+}
+
+/// Import and correlate Mobile Verification Toolkit (MVT) audit records
+pub fn import_mvt_results(lang: Lang, path: &Path) -> Result<Vec<MobileAuditFinding>, String> {
+    if !path.exists() {
+        return Err(format!("Specified MVT path does not exist: {}", path.display()));
+    }
+
+    match lang {
+        Lang::Ru => {
+            println!("\n{}", "📱 ИМПОРТ И КОРРЕЛЯЦИЯ РЕЗУЛЬТАТОВ MVT (MOBILE VERIFICATION TOOLKIT)".bold().cyan());
+            println!("  Источник: {}", path.display());
+            println!("{}", "─".repeat(70).dimmed());
+        }
+        Lang::En => {
+            println!("\n{}", "📱 IMPORTING & CORRELATING MVT (MOBILE VERIFICATION TOOLKIT) RESULTS".bold().cyan());
+            println!("  Source: {}", path.display());
+            println!("{}", "─".repeat(70).dimmed());
+        }
+    }
+
+    let mut json_files = Vec::new();
+    if path.is_file() {
+        json_files.push(path.to_path_buf());
+    } else if path.is_dir() {
+        if let Ok(entries) = std::fs::read_dir(path) {
+            for entry in entries.filter_map(Result::ok) {
+                let p = entry.path();
+                if p.is_file() && p.extension().and_then(|e| e.to_str()) == Some("json") {
+                    json_files.push(p);
+                }
+            }
+        }
+    }
+
+    if json_files.is_empty() {
+        match lang {
+            Lang::Ru => return Err("В указанной директории не найдены JSON-отчеты MVT.".to_string()),
+            Lang::En => return Err("No MVT JSON report files found in the specified directory.".to_string()),
+        }
+    }
+
+    let mut findings = Vec::new();
+    let mut inspected_files = 0;
+    let mut total_records = 0;
+
+    for file_path in &json_files {
+        inspected_files += 1;
+        let file_name = file_path.file_name().unwrap_or_default().to_string_lossy().to_string();
+
+        let content = match std::fs::read_to_string(file_path) {
+            Ok(c) => c,
+            Err(_) => continue,
+        };
+
+        let json_val: Value = match serde_json::from_str(&content) {
+            Ok(v) => v,
+            Err(_) => {
+                let mut lines_findings = Vec::new();
+                for line in content.lines() {
+                    if let Ok(item) = serde_json::from_str::<Value>(line) {
+                        total_records += 1;
+                        check_mvt_record(&item, &file_name, &mut lines_findings);
+                    }
+                }
+                findings.extend(lines_findings);
+                continue;
+            }
+        };
+
+        if let Value::Array(arr) = json_val {
+            total_records += arr.len();
+            for item in arr {
+                check_mvt_record(&item, &file_name, &mut findings);
+            }
+        } else if let Value::Object(_) = json_val {
+            total_records += 1;
+            check_mvt_record(&json_val, &file_name, &mut findings);
+        }
+    }
+
+    match lang {
+        Lang::Ru => {
+            println!("  ✔ Проанализировано файлов MVT: {}", inspected_files);
+            println!("  ✔ Проверено записей (история, пакеты, дампы): {}", total_records);
+        }
+        Lang::En => {
+            println!("  ✔ Inspected MVT files: {}", inspected_files);
+            println!("  ✔ Analyzed forensic records: {}", total_records);
+        }
+    }
+
+    if findings.is_empty() {
+        match lang {
+            Lang::Ru => println!("\n{}", "  ✔ Корреляция с базой Sentinel: совпадений с известными C2 и сталкерваром не найдено.".green().bold()),
+            Lang::En => println!("\n{}", "  ✔ Sentinel correlation clean: no matches with known C2 servers or stalkerware signatures.".green().bold()),
+        }
+    } else {
+        println!();
+        match lang {
+            Lang::Ru => println!("{}", format!("  ⚠️ ОБНАРУЖЕНО УГРОЗ В ДАМПАХ MVT: {}", findings.len()).red().bold()),
+            Lang::En => println!("{}", format!("  ⚠️ THREATS IDENTIFIED IN MVT AUDIT: {}", findings.len()).red().bold()),
+        }
+
+        for f in &findings {
+            println!("    • [{}] {} — {}", f.severity.red().bold(), f.threat_name.bold(), f.package_name.yellow());
+            println!("      {}", f.description.dimmed());
+        }
+    }
+    println!();
+
+    Ok(findings)
+}
+
+fn check_mvt_record(item: &Value, source_file: &str, findings: &mut Vec<MobileAuditFinding>) {
+    // 1. Direct MVT detections (detected.json)
+    if let Some(indicator) = item.get("matched_indicator").or_else(|| item.get("indicator")).and_then(|v| v.as_str()) {
+        let threat = item.get("threat_name").or_else(|| item.get("module")).and_then(|v| v.as_str()).unwrap_or("MVT Detected Spyware IOC");
+        findings.push(MobileAuditFinding {
+            package_name: indicator.to_string(),
+            threat_name: format!("MVT Spyware Detection ({})", threat),
+            severity: "Critical",
+            description: format!("Forensic IOC matched by MVT in '{}': {}", source_file, indicator),
+        });
+    }
+
+    // 2. URLs and Domains cross-check with Sentinel C2 database
+    if let Some(url_str) = item.get("url").or_else(|| item.get("domain")).or_else(|| item.get("host")).and_then(|v| v.as_str()) {
+        let domain_candidate = url_str
+            .trim()
+            .trim_start_matches("https://")
+            .trim_start_matches("http://")
+            .split('/')
+            .next()
+            .unwrap_or(url_str)
+            .split(':')
+            .next()
+            .unwrap_or(url_str);
+
+        if let Some(matched_c2) = sentinel_rules::matches_known_c2(domain_candidate) {
+            findings.push(MobileAuditFinding {
+                package_name: url_str.to_string(),
+                threat_name: format!("Stalkerware Command & Control Beacon ({})", matched_c2),
+                severity: "Critical",
+                description: format!("Observed connection to known C2 server in forensic log '{}': {}", source_file, url_str),
+            });
+        }
+    }
+
+    // 3. Android package or iOS bundle ID checks
+    if let Some(pkg) = item.get("package_name").or_else(|| item.get("bundle_id")).or_else(|| item.get("package")).and_then(|v| v.as_str()) {
+        let pkg_lower = pkg.to_lowercase();
+        if pkg_lower.contains("mspy")
+            || pkg_lower.contains("flexispy")
+            || pkg_lower.contains("ikeymonitor")
+            || pkg_lower.contains("spappmonitoring")
+            || pkg_lower.contains("hoverwatch")
+            || pkg_lower.contains("snoopza")
+            || pkg_lower.contains("clevguard")
+            || pkg_lower.contains("cerberus")
+            || pkg_lower.contains("cocospy")
+            || pkg_lower.contains("spyic")
+        {
+            findings.push(MobileAuditFinding {
+                package_name: pkg.to_string(),
+                threat_name: "Stalkerware Mobile Package / Bundle".to_string(),
+                severity: "Critical",
+                description: format!("Forensic record in '{}' identified stalkerware package: {}", source_file, pkg),
+            });
+        }
+    }
 }

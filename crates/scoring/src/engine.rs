@@ -107,12 +107,7 @@ impl<'a> ScoringEngine<'a> {
                         is_legitimate_likely: false,
                         removal_policy: sentinel_core::RemovalPolicy::SafeAuto,
                         evidence: vec![ev.clone()],
-                        explanation: sentinel_core::FindingExplanation {
-                            what_is_it,
-                            why_flagged,
-                            is_legitimate,
-                            recommendation,
-                        },
+                        explanation: sentinel_core::FindingExplanation::new(what_is_it, why_flagged, is_legitimate, recommendation),
                         removal_steps: RemovalSteps {
                             steps,
                             manual_guide_windows: Some(format!("Inspect folder '{}' and terminate process '{}' via Task Manager", path_str, name)),
@@ -263,12 +258,7 @@ impl<'a> ScoringEngine<'a> {
                         is_legitimate_likely: false,
                         removal_policy: sentinel_core::RemovalPolicy::SafeAuto,
                         evidence: vec![ev.clone()],
-                        explanation: sentinel_core::FindingExplanation {
-                            what_is_it,
-                            why_flagged,
-                            is_legitimate,
-                            recommendation,
-                        },
+                        explanation: sentinel_core::FindingExplanation::new(what_is_it, why_flagged, is_legitimate, recommendation),
                         removal_steps: RemovalSteps {
                             steps: vec![
                                 RemovalStep {
@@ -342,12 +332,7 @@ impl<'a> ScoringEngine<'a> {
                         is_legitimate_likely: false,
                         removal_policy: sentinel_core::RemovalPolicy::SafeAuto,
                         evidence: vec![ev.clone()],
-                        explanation: sentinel_core::FindingExplanation {
-                            what_is_it,
-                            why_flagged,
-                            is_legitimate,
-                            recommendation,
-                        },
+                        explanation: sentinel_core::FindingExplanation::new(what_is_it, why_flagged, is_legitimate, recommendation),
                         removal_steps: RemovalSteps {
                             steps: vec![
                                 RemovalStep {
@@ -403,12 +388,7 @@ impl<'a> ScoringEngine<'a> {
                     is_legitimate_likely: false,
                     removal_policy: sentinel_core::RemovalPolicy::ManualReview,
                     evidence: vec![ev.clone()],
-                    explanation: sentinel_core::FindingExplanation {
-                        what_is_it,
-                        why_flagged,
-                        is_legitimate,
-                        recommendation,
-                    },
+                    explanation: sentinel_core::FindingExplanation::new(what_is_it, why_flagged, is_legitimate, recommendation),
                     removal_steps: RemovalSteps::default(),
                     references: vec![
                         "https://attack.mitre.org/techniques/T1557/001/".to_string(),
@@ -433,12 +413,12 @@ impl<'a> ScoringEngine<'a> {
                     is_legitimate_likely: false,
                     removal_policy: sentinel_core::RemovalPolicy::ManualReview,
                     evidence: vec![ev.clone()],
-                    explanation: sentinel_core::FindingExplanation {
-                        what_is_it: "Модификация файла hosts для блокировки сайтов безопасности".to_string(),
-                        why_flagged: ev.description.clone(),
-                        is_legitimate: "Крайне маловероятно. Используется вредоносным ПО для изоляции антивирусных ресурсов.".to_string(),
-                        recommendation: "Очистите файл C:\\Windows\\System32\\drivers\\etc\\hosts от подозрительных записей.".to_string(),
-                    },
+                    explanation: sentinel_core::FindingExplanation::new(
+                        "Модификация файла hosts для блокировки сайтов безопасности",
+                        ev.description.clone(),
+                        "Крайне маловероятно. Используется вредоносным ПО для изоляции антивирусных ресурсов.",
+                        "Очистите файл C:\\Windows\\System32\\drivers\\etc\\hosts от подозрительных записей.",
+                    ),
                     removal_steps: RemovalSteps::default(),
                     references: vec![
                         "https://attack.mitre.org/techniques/T1565/001/".to_string(),
@@ -463,12 +443,12 @@ impl<'a> ScoringEngine<'a> {
                     is_legitimate_likely: false,
                     removal_policy: sentinel_core::RemovalPolicy::ManualReview,
                     evidence: vec![ev.clone()],
-                    explanation: sentinel_core::FindingExplanation {
-                        what_is_it: "Скрытый механизм автозапуска через WMI Event Consumer".to_string(),
-                        why_flagged: ev.description.clone(),
-                        is_legitimate: "Редко используется обычными программами, характерен для APT и скрытого шпионского ПО.".to_string(),
-                        recommendation: "Проверьте пространство имён WMI root\\subscription и удалите подозрительный EventConsumer.".to_string(),
-                    },
+                    explanation: sentinel_core::FindingExplanation::new(
+                        "Скрытый механизм автозапуска через WMI Event Consumer",
+                        ev.description.clone(),
+                        "Редко используется обычными программами, характерен для APT и скрытого шпионского ПО.",
+                        "Проверьте пространство имён WMI root\\subscription и удалите подозрительный EventConsumer.",
+                    ),
                     removal_steps: RemovalSteps::default(),
                     references: vec![
                         "https://attack.mitre.org/techniques/T1546/003/".to_string(),
@@ -498,12 +478,12 @@ impl<'a> ScoringEngine<'a> {
                         is_legitimate_likely: false,
                         removal_policy: sentinel_core::RemovalPolicy::ManualReview,
                         evidence: vec![ev.clone()],
-                        explanation: sentinel_core::FindingExplanation {
-                            what_is_it: format!("Расширение браузера {} с правами отладки или блокирующего перехвата трафика", browser),
-                            why_flagged: format!("Расширение '{}' запрашивает критические разрешения: {}.", name, permissions.join(", ")),
-                            is_legitimate: "Такие разрешения могут использоваться легитимными инструментами разработки, но также применяются для негласного перехвата сессий и форм ввода.".to_string(),
-                            recommendation: format!("Откройте страницу расширений в {} и удалите '{}', если вы не устанавливали его осознанно.", browser, name),
-                        },
+                        explanation: sentinel_core::FindingExplanation::new(
+                            format!("Расширение браузера {} с правами отладки или блокирующего перехвата трафика", browser),
+                            format!("Расширение '{}' запрашивает критические разрешения: {}.", name, permissions.join(", ")),
+                            "Такие разрешения могут использоваться легитимными инструментами разработки, но также применяются для негласного перехвата сессий и форм ввода.",
+                            format!("Откройте страницу расширений в {} и удалите '{}', если вы не устанавливали его осознанно.", browser, name),
+                        ),
                         removal_steps: RemovalSteps {
                             steps: vec![],
                             manual_guide_windows: Some(format!("Open {} > Extensions and remove '{}'", browser, name)),
@@ -517,6 +497,80 @@ impl<'a> ScoringEngine<'a> {
                         mitre_attack: vec!["T1176".to_string(), "T1185".to_string()],
                     });
                 }
+            }
+        }
+
+        // 9. Correlate Hidden Process Discrepancies (Rootkit / DKOM process hiding)
+        for ev in all_evidence {
+            if ev.evidence_type == sentinel_core::EvidenceType::HiddenProcessDiscrepancy {
+                has_high_severity = true;
+                let pid_str = if let Some(sentinel_core::EvidenceData::ProcessDiscrepancy { pid, .. }) = &ev.data {
+                    pid.to_string()
+                } else {
+                    "UNKNOWN".to_string()
+                };
+
+                findings.push(Finding {
+                    id: format!("DISCREPANCY-PID-{}", pid_str),
+                    rule_id: "hidden_process_discrepancy".to_string(),
+                    name: "Hidden Process Discrepancy (DKOM / Rootkit Anomaly)".to_string(),
+                    vendor: Some("Kernel / Memory Integrity".to_string()),
+                    category: sentinel_core::Category::ProcessWatcher,
+                    severity: Severity::Critical,
+                    confidence: Confidence::new(0.95),
+                    is_legitimate_likely: false,
+                    removal_policy: sentinel_core::RemovalPolicy::ManualReview,
+                    evidence: vec![ev.clone()],
+                    explanation: sentinel_core::FindingExplanation::new(
+                        "Обнаружен скрытый системный процесс, отсутствующий в стандартных таблицах процессов",
+                        ev.description.clone(),
+                        "Крайне маловероятно. Характерно для Ring-0 руткитов, перехватчиков и скрытых агентов слежки.",
+                        "Проведите углублённый анализ дампов памяти или проверьте систему загрузочным антивирусом.",
+                    ),
+                    removal_steps: RemovalSteps::default(),
+                    references: vec![
+                        "https://attack.mitre.org/techniques/T1014/".to_string(),
+                        "https://attack.mitre.org/techniques/T1057/".to_string(),
+                    ],
+                    mitre_attack: vec!["T1014".to_string(), "T1057".to_string()],
+                });
+            }
+        }
+
+        // 10. Correlate Hardware Keyloggers & USB HID Anomalies
+        for ev in all_evidence {
+            if ev.evidence_type == sentinel_core::EvidenceType::HardwareKeylogger {
+                has_high_severity = true;
+                let dev_id = if let Some(sentinel_core::EvidenceData::HardwareDevice { hardware_id, .. }) = &ev.data {
+                    hardware_id.replace([' ', '\\', '&', '{', '}'], "-")
+                } else {
+                    "USB-DEVICE".to_string()
+                };
+
+                findings.push(Finding {
+                    id: format!("HW-KEYLOGGER-{}", dev_id),
+                    rule_id: "hardware_usb_keylogger".to_string(),
+                    name: "Hardware Keylogger or Rogue Keystroke Injector".to_string(),
+                    vendor: Some("USB HID Device Enumerator".to_string()),
+                    category: sentinel_core::Category::KeyboardCapture,
+                    severity: Severity::Critical,
+                    confidence: Confidence::new(0.90),
+                    is_legitimate_likely: false,
+                    removal_policy: sentinel_core::RemovalPolicy::ManualReview,
+                    evidence: vec![ev.clone()],
+                    explanation: sentinel_core::FindingExplanation::new(
+                        "Обнаружено подозрительное физическое USB-устройство, эмулирующее клавиатуру (аппаратный кейлоггер / BadUSB)",
+                        ev.description.clone(),
+                        "Маловероятно. Микроконтроллеры BadUSB и аппаратные перехватчики клавиатуры используются для негласного шпионажа.",
+                        "Физически проверьте USB-порты и отключите подозрительные переходники между клавиатурой и системным блоком.",
+                    ),
+                    removal_steps: RemovalSteps::default(),
+                    references: vec![
+                        "https://attack.mitre.org/techniques/T1056/001/".to_string(),
+                        "https://attack.mitre.org/techniques/T1200/".to_string(),
+                    ],
+                    mitre_attack: vec!["T1056.001".to_string(), "T1200".to_string()],
+                });
             }
         }
 

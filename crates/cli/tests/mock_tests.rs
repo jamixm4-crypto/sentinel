@@ -700,5 +700,76 @@ fn test_sarif_csv_stix_export_formats() {
     assert_eq!(objects[0]["spec_version"], "2.1");
 }
 
+#[test]
+fn test_c2_export_suricata_hosts_domains() {
+    let custom = vec!["rogue-c2-beacon.com".to_string()];
+
+    // 1. Suricata export (for TinyCheck / Snort)
+    let suricata = sentinel_rules::export_suricata_rules(&custom, 9000000);
+    assert!(suricata.contains("SENTINEL Stalkerware C2 DNS Query:"));
+    assert!(suricata.contains("SENTINEL Stalkerware C2 TLS SNI:"));
+    assert!(suricata.contains("SENTINEL Stalkerware C2 HTTP Host:"));
+    assert!(suricata.contains("rogue-c2-beacon.com"));
+    assert!(suricata.contains("flexispy.com"));
+    assert!(suricata.contains("sid:9000000"));
+    assert!(suricata.contains("classtype:trojan-activity"));
+
+    // 2. Hosts blocklist export (for Pi-hole / AdGuard)
+    let hosts = sentinel_rules::export_hosts_format(&custom);
+    assert!(hosts.contains("0.0.0.0 rogue-c2-beacon.com"));
+    assert!(hosts.contains("0.0.0.0 flexispy.com"));
+
+    // 3. Domains plain list export
+    let domains = sentinel_rules::export_domains_list(&custom);
+    assert!(domains.contains("rogue-c2-beacon.com\n"));
+    assert!(domains.contains("flexispy.com\n"));
+}
+
+#[test]
+fn test_process_discrepancy_and_hardware_keylogger_scoring() {
+    let rules = sentinel_rules::get_embedded_rules();
+    let scoring = ScoringEngine::new(&rules, Lang::En);
+
+    let discrepancy_ev = Evidence::new(
+        EvidenceType::HiddenProcessDiscrepancy,
+        "ProcessDiscrepancyCollector",
+        "Process discrepancy: PID 6666 missing from NtQuery",
+        "PID 6666 unlinked from standard process enumeration",
+    ).with_data(EvidenceData::ProcessDiscrepancy {
+        pid: 6666,
+        detected_in: "PSAPI".to_string(),
+        missing_from: "NtQuery".to_string(),
+        details: "DKOM test".to_string(),
+    });
+
+    let hw_ev = Evidence::new(
+        EvidenceType::HardwareKeylogger,
+        "WindowsUsbHidCollector",
+        "Suspicious hardware keyboard: Hak5 Key Croc (VID_1D50)",
+        "HardwareID: HID\\VID_1D50&PID_6089",
+    ).with_data(EvidenceData::HardwareDevice {
+        device_name: "Hak5 Key Croc".to_string(),
+        hardware_id: "HID\\VID_1D50&PID_6089".to_string(),
+        device_type: "USB HID Keyboard".to_string(),
+        is_suspicious: true,
+    });
+
+    let (verdict, findings) = scoring.evaluate(&[discrepancy_ev, hw_ev]);
+
+    assert_eq!(verdict, Verdict::SurveillanceLikely);
+    assert_eq!(findings.len(), 2);
+
+    let disc_finding = findings.iter().find(|f| f.rule_id == "hidden_process_discrepancy").expect("Discrepancy finding must exist");
+    assert_eq!(disc_finding.severity, Severity::Critical);
+    assert_eq!(disc_finding.category, Category::ProcessWatcher);
+    assert!(disc_finding.explanation.what_is_it.contains("скрытый системный процесс"));
+
+    let hw_finding = findings.iter().find(|f| f.rule_id == "hardware_usb_keylogger").expect("Hardware keylogger finding must exist");
+    assert_eq!(hw_finding.severity, Severity::Critical);
+    assert_eq!(hw_finding.category, Category::KeyboardCapture);
+    assert!(hw_finding.explanation.what_is_it.contains("аппаратный кейлоггер"));
+}
+
+
 
 

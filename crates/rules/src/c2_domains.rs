@@ -148,6 +148,70 @@ pub fn matches_c2_with_custom(host: &str, custom_list: &[String]) -> Option<Stri
     None
 }
 
+/// Returns all unique C2 domains combining embedded domains with optional custom domains.
+pub fn get_all_c2_domains(custom_list: &[String]) -> Vec<String> {
+    let mut set = std::collections::BTreeSet::new();
+    for d in KNOWN_C2_DOMAINS {
+        set.insert(d.to_string());
+    }
+    for c in custom_list {
+        let clean = c.trim().to_lowercase();
+        if !clean.is_empty() {
+            set.insert(clean);
+        }
+    }
+    set.into_iter().collect()
+}
+
+/// Exports C2 domains as Suricata / Snort rules compatible with TinyCheck, pfSense, and OPNSense.
+pub fn export_suricata_rules(custom_list: &[String], sid_start: u32) -> String {
+    let domains = get_all_c2_domains(custom_list);
+    let mut out = String::with_capacity(domains.len() * 300);
+    out.push_str("# -----------------------------------------------------------------------------\n");
+    out.push_str("# Sentinel Anti-Surveillance C2 Rules for Suricata / Snort / TinyCheck\n");
+    out.push_str("# Generated offline by Sentinel (https://github.com/jamixm4-crypto/sentinel)\n");
+    out.push_str(&format!("# Total indicators: {}\n", domains.len()));
+    out.push_str("# -----------------------------------------------------------------------------\n\n");
+
+    let mut sid = sid_start;
+    for domain in domains {
+        // DNS Query inspection
+        out.push_str(&format!(
+            "alert dns $HOME_NET any -> any any (msg:\"SENTINEL Stalkerware C2 DNS Query: {domain}\"; dns.query; content:\"{domain}\"; nocase; endswith; classtype:trojan-activity; sid:{sid}; rev:1;)\n"
+        ));
+        // TLS SNI inspection
+        out.push_str(&format!(
+            "alert tls $HOME_NET any -> any 443 (msg:\"SENTINEL Stalkerware C2 TLS SNI: {domain}\"; tls.sni; content:\"{domain}\"; nocase; endswith; classtype:trojan-activity; sid:{}; rev:1;)\n",
+            sid + 100_000
+        ));
+        // HTTP Host inspection
+        out.push_str(&format!(
+            "alert http $HOME_NET any -> any any (msg:\"SENTINEL Stalkerware C2 HTTP Host: {domain}\"; http.host; content:\"{domain}\"; nocase; endswith; classtype:trojan-activity; sid:{}; rev:1;)\n\n",
+            sid + 200_000
+        ));
+        sid += 1;
+    }
+    out
+}
+
+/// Exports C2 domains in hosts format (0.0.0.0 domain) for Pi-hole, AdGuard Home, or /etc/hosts.
+pub fn export_hosts_format(custom_list: &[String]) -> String {
+    let domains = get_all_c2_domains(custom_list);
+    let mut out = String::with_capacity(domains.len() * 40);
+    out.push_str("# Sentinel Stalkerware C2 Blocklist (Hosts format)\n");
+    out.push_str("# Compatible with Pi-hole, AdGuard Home, and local hosts file\n\n");
+    for d in domains {
+        out.push_str(&format!("0.0.0.0 {}\n", d));
+    }
+    out
+}
+
+/// Exports C2 domains as plain list (one per line).
+pub fn export_domains_list(custom_list: &[String]) -> String {
+    let domains = get_all_c2_domains(custom_list);
+    domains.join("\n") + "\n"
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -170,5 +234,18 @@ mod tests {
             Some("flexispy.com".to_string())
         );
         assert_eq!(matches_c2_with_custom("safe.org", &custom), None);
+
+        let suricata = export_suricata_rules(&custom, 9000000);
+        assert!(suricata.contains("SENTINEL Stalkerware C2 DNS Query: flexispy.com"));
+        assert!(suricata.contains("malicious-tracker.org"));
+        assert!(suricata.contains("sid:9000000"));
+
+        let hosts = export_hosts_format(&custom);
+        assert!(hosts.contains("0.0.0.0 flexispy.com"));
+        assert!(hosts.contains("0.0.0.0 malicious-tracker.org"));
+
+        let list = export_domains_list(&custom);
+        assert!(list.contains("flexispy.com\n"));
+        assert!(list.contains("malicious-tracker.org\n"));
     }
 }

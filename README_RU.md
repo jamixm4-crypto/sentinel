@@ -90,10 +90,22 @@ sentinel schedule install --daily --time 10:00
 sentinel schedule status
 sentinel schedule remove
 
-# 11. Аудит подключенного Android-смартфона на stalkerware (через USB ADB):
+# 11. Мобильный аудит (Android через ADB и локальные копии iOS):
 sentinel mobile scan
+sentinel mobile scan --ios /path/to/itunes_backup
 
-# 12. Офлайн-обновление базы правил и C2-доменов:
+# 12. Корреляция дампов Mobile Verification Toolkit (MVT):
+sentinel mobile import /path/to/mvt_results/
+
+# 13. Экспорт C2-сигнатур для TinyCheck / Suricata или Pi-hole / AdGuard:
+sentinel rules export --format suricata --out tinycheck.rules
+sentinel rules export --format hosts --out c2-blocklist.txt
+
+# 14. Справка по руткитам и аппаратным кейлоггерам:
+sentinel explain discrepancy
+sentinel explain keylogger
+
+# 15. Офлайн-обновление базы правил и C2-доменов:
 sentinel rules update --from /path/to/custom_rules/
 sentinel rules update --from /path/to/c2_domains.txt
 ```

@@ -283,6 +283,21 @@ enum MobileCommands {
         /// Path to local iOS backup directory (optional, auto-detected if omitted)
         #[arg(long)]
         ios: Option<PathBuf>,
+
+        /// Path to MVT (Mobile Verification Toolkit) results directory to correlate
+        #[arg(long)]
+        mvt: Option<PathBuf>,
+    },
+
+    /// Import and correlate Mobile Verification Toolkit (MVT) forensic results
+    #[command(alias = "import")]
+    ImportMvt {
+        /// Path to MVT results directory or JSON file (e.g. mvt-output/ or records.json)
+        path: PathBuf,
+
+        /// Select interface language (en | ru)
+        #[arg(short, long, default_value = "en")]
+        lang: String,
     },
 }
 
@@ -307,6 +322,21 @@ enum RulesCommands {
         /// Import rules from a local directory or file
         #[arg(long)]
         from: Option<PathBuf>,
+    },
+    /// Export C2 domains in Suricata (TinyCheck/Snort), hosts, or plain domain format
+    #[command(alias = "export")]
+    ExportC2 {
+        /// Export format: suricata (TinyCheck/Snort), hosts (Pi-hole/AdGuard), or domains (plain list)
+        #[arg(long, default_value = "suricata")]
+        format: String,
+
+        /// Output file path (prints to stdout if omitted)
+        #[arg(short, long)]
+        out: Option<PathBuf>,
+
+        /// Starting SID for Suricata rules (defaults to 9000000)
+        #[arg(long, default_value_t = 9000000)]
+        sid_start: u32,
     },
 }
 
@@ -487,6 +517,29 @@ fn main() {
                     println!("  {}", "sentinel rules update --from <path/to/rules_or_c2.txt>".cyan());
                 }
             }
+            RulesCommands::ExportC2 { format, out, sid_start } => {
+                let custom_c2 = load_custom_c2_domains();
+                let content = match format.to_lowercase().as_str() {
+                    "suricata" | "snort" | "tinycheck" => {
+                        sentinel_rules::export_suricata_rules(&custom_c2, sid_start)
+                    }
+                    "hosts" => sentinel_rules::export_hosts_format(&custom_c2),
+                    "domains" | "list" => sentinel_rules::export_domains_list(&custom_c2),
+                    other => {
+                        eprintln!("{} Unknown export format '{}'. Supported: suricata, hosts, domains", "✖".red(), other);
+                        return;
+                    }
+                };
+
+                if let Some(dest) = out {
+                    match std::fs::write(&dest, &content) {
+                        Ok(_) => println!("{} Exported {} C2 indicators to '{}' (format: {}).", "✔".green(), sentinel_rules::get_all_c2_domains(&custom_c2).len(), dest.display(), format),
+                        Err(e) => eprintln!("{} Failed to write to '{}': {}", "✖".red(), dest.display(), e),
+                    }
+                } else {
+                    print!("{}", content);
+                }
+            }
         },
         Commands::Purge {
             yes,
@@ -560,10 +613,21 @@ fn main() {
             }
         },
         Commands::Mobile { action } => match action {
-            MobileCommands::Scan { lang, ios } => {
+            MobileCommands::Scan { lang, ios, mvt } => {
                 let l = Lang::from_code(&lang);
+                if let Some(mvt_path) = mvt {
+                    if let Err(e) = mobile::import_mvt_results(l, &mvt_path) {
+                        eprintln!("{} MVT audit error: {}", "❌".red().bold(), e);
+                    }
+                }
                 if let Err(e) = mobile::scan_connected_mobile_device(l, ios.as_deref()) {
                     eprintln!("{} Mobile scan error: {}", "❌".red().bold(), e);
+                }
+            }
+            MobileCommands::ImportMvt { path, lang } => {
+                let l = Lang::from_code(&lang);
+                if let Err(e) = mobile::import_mvt_results(l, &path) {
+                    eprintln!("{} MVT import error: {}", "❌".red().bold(), e);
                 }
             }
         },
@@ -1064,6 +1128,49 @@ fn execute_remove(
 fn execute_explain(id: &str, lang: Lang) {
     let id_lower = id.trim().to_lowercase();
 
+    // Check if explaining Hidden Process Discrepancies (DKOM / Rootkits)
+    if id_lower.contains("discrepancy") || id_lower == "rootkit" || id_lower == "dkom" {
+        println!("\n  {} {}", "🛡️".cyan(), "THREAT PROFILE: Hidden Process Discrepancy (DKOM / Rootkit Anomaly)".bold());
+        println!("  Rule ID: hidden_process_discrepancy | Category: Process Watcher / Defense Evasion | Severity: Critical");
+        println!("  Confidence: 0.95 (High) | Policy: ManualReview (Memory inspection / live triage)");
+        println!("\n  Threat Actor Tactics & MITRE ATT&CK Mapping:");
+        println!("    • MITRE Tactic: TA0005 (Defense Evasion)");
+        println!("    • MITRE Technique: T1014 (Rootkit: Direct Kernel Object Manipulation / DKOM)");
+        println!("    • MITRE Technique: T1057 (Process Discovery)");
+        println!("    • Reference: https://attack.mitre.org/techniques/T1014/");
+        println!("\n  Real-World Incident Context:");
+        println!("    Rootkits and advanced spyware unhook or unlink their processes from the EPROCESS active list (DKOM)");
+        println!("    to hide from Task Manager, Process Explorer, and standard toolhelp enumeration.");
+        println!("    Sentinel detected this anomaly by cross-checking low-level system process tables against alternate OS APIs.");
+        println!("\n  Incident Triage & Response Protocol:");
+        println!("    1. Do not reboot immediately if forensic memory capture is required.");
+        println!("    2. Capture full physical memory dump (using WinPmem or LiME) for offline Volatility analysis.");
+        println!("    3. Reboot into safe mode or bootable rescue media to scan the disk offline.");
+        println!();
+        return;
+    }
+
+    // Check if explaining Hardware USB Keyloggers & Rogue HID Devices
+    if id_lower.contains("hardware") || id_lower.contains("keylogger") || id_lower.contains("badusb") {
+        println!("\n  {} {}", "🛡️".cyan(), "THREAT PROFILE: Hardware Keylogger or Rogue USB Keystroke Injector".bold());
+        println!("  Rule ID: hardware_usb_keylogger | Category: Keyboard Capture | Severity: Critical");
+        println!("  Confidence: 0.90 (High) | Policy: ManualReview (Physical inspection)");
+        println!("\n  Threat Actor Tactics & MITRE ATT&CK Mapping:");
+        println!("    • MITRE Tactic: TA0009 (Collection)");
+        println!("    • MITRE Technique: T1056.001 (Input Capture: Keylogging)");
+        println!("    • MITRE Technique: T1200 (Hardware Additions: USB In-Line Interceptor / BadUSB)");
+        println!("    • Reference: https://attack.mitre.org/techniques/T1200/");
+        println!("\n  Real-World Incident Context:");
+        println!("    Hardware keyloggers (e.g. KeyGrabber, Hak5 Key Croc, Teensy/BadUSB) are physical USB devices");
+        println!("    connected in-line between the keyboard and the computer port, recording every keystroke or injecting payloads.");
+        println!("\n  Incident Triage & Response Protocol:");
+        println!("    1. Physically inspect the back of the computer and follow the keyboard cable directly to the USB port.");
+        println!("    2. Look for unexpected dongles, barrel connectors, or USB hubs inserted between the cable and the chassis.");
+        println!("    3. Unplug any unknown USB adapters and disconnect the machine from the network immediately.");
+        println!();
+        return;
+    }
+
     // Check if explaining C2 network beaconing
     if id_lower == "stalkerware_c2_network_beacon" || id_lower.starts_with("c2-") || id_lower == "c2" {
         println!("\n  {} {}", "🛡️".cyan(), "THREAT PROFILE: Stalkerware Command-and-Control (C2) Infrastructure".bold());
@@ -1201,6 +1308,25 @@ fn execute_explain(id: &str, lang: Lang) {
             println!("\n  Threat Intelligence & References:");
             for r in &rule.references {
                 println!("    • {}", r);
+            }
+        }
+
+        println!("\n  Confidential Support & Emergency Hotlines:");
+        match lang {
+            Lang::Ru => {
+                println!("    • Международный каталог кризисных центров: https://lila.help");
+                println!("    • Коалиция против сталкерского ПО: https://stopstalkerware.org");
+                println!("    • Всероссийский телефон доверия для женщин: 8-800-7000-600 (Центр «Анна»)");
+                println!("    • Центр помощи пережившим насилие «Насилию.нет»: +7 (495) 916-30-00");
+                println!("    • Кризисный центр помощи женщинам «Сёстры»: https://sestry-online.ru");
+            }
+            Lang::En => {
+                println!("    • Global Directory of Local Support: https://lila.help");
+                println!("    • Coalition Against Stalkerware: https://stopstalkerware.org");
+                println!("    • US National Domestic Violence Hotline: 1-800-799-SAFE (88788 text 'START')");
+                println!("    • UK National Domestic Abuse Helpline: 0808 2000 247 (Refuge)");
+                println!("    • European Emergency Number: 112 | EU Domestic Violence Hotline: 116 016");
+                println!("    • Cyber Civil Rights Initiative: https://cybercivilrights.org");
             }
         }
         println!();

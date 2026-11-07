@@ -128,6 +128,34 @@ pub struct FindingExplanation {
     pub why_flagged: String,
     pub is_legitimate: String,
     pub recommendation: String,
+    #[serde(default)]
+    pub safety_risk: Option<String>,
+    #[serde(default)]
+    pub emergency_guidance: Option<String>,
+}
+
+impl FindingExplanation {
+    pub fn new(
+        what_is_it: impl Into<String>,
+        why_flagged: impl Into<String>,
+        is_legitimate: impl Into<String>,
+        recommendation: impl Into<String>,
+    ) -> Self {
+        Self {
+            what_is_it: what_is_it.into(),
+            why_flagged: why_flagged.into(),
+            is_legitimate: is_legitimate.into(),
+            recommendation: recommendation.into(),
+            safety_risk: None,
+            emergency_guidance: None,
+        }
+    }
+
+    pub fn with_safety(mut self, risk: impl Into<String>, guidance: impl Into<String>) -> Self {
+        self.safety_risk = Some(risk.into());
+        self.emergency_guidance = Some(guidance.into());
+        self
+    }
 }
 
 /// A fully correlated security finding
